@@ -18,10 +18,12 @@
 
 # Telegram session strings, session files, and secrets
 *.session
+*.session*
 *.session-journal
 *.session.json
 /session/
 /sessions/
+/.sessions/
 /secrets/
 
 # Database files
