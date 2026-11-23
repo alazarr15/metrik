@@ -70,11 +70,14 @@ Metrik is a self-hosted, open-source analytics dashboard that collects and visua
 | `pnpm test` | Runs unit tests (Vitest) |
 | `pnpm test:watch` | Runs Vitest in watch mode |
 | `pnpm collect:public` | Executes the public channel preview collector spike |
+| `pnpm prisma generate` | Generates the Prisma Client |
+| `pnpm prisma migrate dev` | Applies pending database migrations in development |
 
 ---
 
 ## Architecture & Data Integrity Notes
 
+- **Database Foundation**: The PostgreSQL database schema models channels, posts, append-only metric observations, and sync audit runs with strict data integrity rules. See [docs/database-schema.md](docs/database-schema.md) for full details.
 - **No Personal Login Required**: The collector operates purely on public channel web previews. No user sessions or SMS codes are used.
 - **Counter Precision Handling**:
   - Telegram public web previews display exact integer counts for values $< 1,000$ (e.g. `98`, `450`), but format values $\ge 1,000$ with metric suffixes (e.g. `1.2K`, `1.74M`).

@@ -9,3 +9,86 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+enum MetricType {
+  VIEWS
+  REACTIONS
+  COMMENTS
+}
+
+enum MetricPrecision {
+  EXACT
+  ROUNDED
+  UNAVAILABLE
+}
+
+enum SyncStatus {
+  RUNNING
+  SUCCESS
+  FAILED
+}
+
+model Channel {
+  id               String       @id @default(cuid())
+  telegramUsername String       @unique
+  title            String?
+  timezone         String       @default("Africa/Addis_Ababa")
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  posts            Post[]
+  syncRuns         SyncRun[]
+
+  @@map("channels")
+}
+
+model Post {
+  id                String                  @id @default(cuid())
+  channelId         String
+  telegramMessageId Int
+  publishedAt       DateTime
+  text              String?
+  deletedAt         DateTime?
+  createdAt         DateTime                @default(now())
+  updatedAt         DateTime                @updatedAt
+
+  channel           Channel                 @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  observations      PostMetricObservation[]
+
+  @@unique([channelId, telegramMessageId])
+  @@index([channelId, publishedAt])
+  @@index([publishedAt])
+  @@map("posts")
+}
+
+model PostMetricObservation {
+  id           String          @id @default(cuid())
+  postId       String
+  observedAt   DateTime        @default(now())
+  metricType   MetricType
+  rawValue     String?
+  numericValue Int?
+  precision    MetricPrecision
+
+  post         Post            @relation(fields: [postId], references: [id], onDelete: Restrict)
+
+  @@index([postId, observedAt])
+  @@index([metricType, observedAt])
+  @@map("post_metric_observations")
+}
+
+model SyncRun {
+  id           String     @id @default(cuid())
+  channelId    String
+  startedAt    DateTime   @default(now())
+  finishedAt   DateTime?
+  status       SyncStatus @default(RUNNING)
+  pagesFetched Int        @default(0)
+  postsFetched Int        @default(0)
+  errorMessage String?
+
+  channel      Channel    @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  @@index([channelId, startedAt])
+  @@map("sync_runs")
+}
