@@ -76,6 +76,22 @@ Metrik is a self-hosted, open-source analytics dashboard that collects and visua
 
 ---
 
+## Analytics API Endpoints
+
+Metrik provides five read-only REST endpoints under `/api/`. All endpoints require authentication via `DASHBOARD_ADMIN_PASSWORD` sent as `Authorization: Bearer <password>` or `x-admin-password: <password>` (missing server password fails closed with HTTP 503; invalid/missing client credential returns HTTP 401).
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/channels` | Lists all monitored channels, active post counts, and latest sync status |
+| `GET` | `/api/channels/[id]` | Channel details, lifetime post counts, reach status (`UNAVAILABLE`), and sync audit |
+| `GET` | `/api/channels/[id]/posts` | Paginated posts with latest views/reactions/comments metrics (`publishedAt DESC, id DESC`) |
+| `GET` | `/api/channels/[id]/analytics` | Period analytics: posts published, lifetime views breakdown, and Observed Views Growth |
+| `GET` | `/api/channels/[id]/posts/[postId]/observations` | Paginated append-only observation history for a specific post |
+
+For complete API specifications, timezone semantics, and calculation algorithms, see [docs/analytics-api-design.md](docs/analytics-api-design.md).
+
+---
+
 ## Architecture & Data Integrity Notes
 
 - **Database Foundation**: The PostgreSQL database schema models channels, posts, append-only metric observations, and sync audit runs with strict data integrity rules. See [docs/database-schema.md](docs/database-schema.md) for full details.
