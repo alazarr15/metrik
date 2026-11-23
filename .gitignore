@@ -1,0 +1,49 @@
+# Dependencies
+/node_modules
+/.pnpm-store
+
+# Next.js build output
+/.next/
+/out/
+/build
+/dist
+
+# Production and test artifacts
+/coverage
+/.vitest
+
+# Environment files
+.env*
+!.env.example
+
+# Telegram session strings, session files, and secrets
+*.session
+*.session-journal
+*.session.json
+/session/
+/sessions/
+/secrets/
+
+# Database files
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# Debug and runtime logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+# Editor and OS files
+.DS_Store
+Thumbs.db
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.tsbuildinfo
