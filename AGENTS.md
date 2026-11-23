@@ -18,19 +18,24 @@ Stack: Next.js (App Router), TypeScript, Tailwind, pnpm, PostgreSQL, Prisma, Vit
 
 ## 3. Hard rules
 - **Never invent** Telegram methods, fields, limits or metrics. If it was not verified by running it or reading the official docs, call it "unverified" and say so in the docs.
-- Do not scrape Telegram or bypass its restrictions. Use official APIs only.
+- **Data Collection Policy (Approved Architecture Exception)**:
+  - Public channel preview access through `https://t.me/s/{username}` is authorized by the project owner for public channels.
+  - Only publicly accessible broadcast channel content may be collected.
+  - No personal Telegram authentication, phone login, MTProto session, or developer API credentials (`api_id`/`api_hash`) are required for the standard workflow.
+  - No private channel or private group access. Linked discussion groups are excluded as their messages are not exposed publicly via web preview.
+  - Strictly no authentication bypass, CAPTCHA bypass, proxy rotation, or anti-bot circumvention.
+  - Respect HTTP status codes, server restrictions, and maintain reasonable request intervals.
+  - Do not claim that public preview collection is an official Telegram API. Document it transparently as web-preview ingestion subject to Telegram platform terms.
+  - Never present approximate public counters (e.g. `1.2K`, `1.74M`) as exact values.
 - Do not add dependencies without a stated reason. Prefer simple solutions over abstractions.
 - No microservices, queues or caches unless the owner approves them.
 - Do not modify unrelated files. Keep diffs small.
 - Never delete or weaken tests to make a build pass.
 
-## 4. Secrets and Telegram sessions (critical)
-A Telegram session can act as the owner's whole Telegram account.
-- Never commit, print, log or paste `api_id`, `api_hash`, phone codes, 2FA passwords, or session strings.
-- Sessions and `.env*` stay git-ignored (keep only `.env.example`). Check staged files for secrets before every commit.
-- The session never goes to the browser or into API responses.
-- Prefer a dedicated test account and test channel for development.
-- Respect Telegram rate limits: wait on `FLOOD_WAIT`, never retry aggressively, never crawl unbounded history.
+## 4. Secrets and credentials
+- The standard public collection mode requires no personal Telegram sessions or API hashes.
+- If optional administrative credentials (e.g. `DASHBOARD_ADMIN_PASSWORD`) or database credentials are used, never commit, print, log, or paste them.
+- Local configuration (`.env*`) remains git-ignored (keep only `.env.example`). Check staged files before every commit.
 
 ## 5. Access control
 The dashboard exposes data and sync controls for a powerful session, so it must not be open to the internet by default.
@@ -47,6 +52,8 @@ The dashboard exposes data and sync controls for a powerful session, so it must 
 - Posts Published counts non-deleted posts by publish time using the configured timezone. Start is inclusive and end is exclusive. Count each post once.
 - Posts removed on Telegram are marked deleted (`deletedAt`), never hard-deleted.
 - Reach is shown as Unavailable on Telegram. Do not substitute views or any other metric.
+- Public counters may be exact (e.g. 98) or rounded (e.g. 1.2K, 1.74M). Store raw displayed text, interpreted numeric value, and precision classification.
+- Never claim rounded counters are exact, and never calculate exact view deltas from rounded observations.
 - Store timestamps in UTC; convert to the configured timezone only at the edges.
 
 ## 7. Sync rules

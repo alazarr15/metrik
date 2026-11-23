@@ -1,8 +1,8 @@
 # Metrik — Telegram Analytics Dashboard
 
-Metrik is a self-hosted, open-source analytics dashboard designed to connect directly to Telegram channels you administer. It provides clean tracking of **Posts Published** and **Views** without relying on third-party SaaS backends, external databases, subscriptions, or centralized servers. Every user clones and operates their own independent instance.
+Metrik is a self-hosted, open-source analytics dashboard that collects and visualizes channel performance metrics (**Posts Published**, **Lifetime Views**, and **Reactions**) for public Telegram channels. Every user clones and operates their own independent instance.
 
-> **Current Development Status**: Phase 0 (Foundation). Only project initialization, configuration, and tooling are set up. Database schema, Telegram API integration, metric processing, and UI dashboard features are **not implemented yet**.
+> **Login-Free Public Collection**: Metrik does **not** require a personal Telegram account, phone number, verification codes, 2FA passwords, or developer API credentials (`api_id` / `api_hash`). It collects publicly available post data via Telegram's public web preview (`https://t.me/s/{username}`).
 
 ---
 
@@ -11,6 +11,7 @@ Metrik is a self-hosted, open-source analytics dashboard designed to connect dir
 - **Framework**: [Next.js](https://nextjs.org/) (App Router)
 - **Language**: [TypeScript](https://www.typescriptlang.org/) (Strict mode)
 - **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **HTML Ingestion**: [Cheerio](https://cheerio.js.org/)
 - **Database ORM**: [Prisma](https://www.prisma.io/) with [PostgreSQL](https://www.postgresql.org/)
 - **Testing**: [Vitest](https://vitest.dev/)
 - **Linting**: [ESLint](https://eslint.org/)
@@ -20,12 +21,10 @@ Metrik is a self-hosted, open-source analytics dashboard designed to connect dir
 
 ## Prerequisites
 
-Before setting up Metrik, ensure you have the following installed:
-
 - **Node.js**: v20 or higher (v22+ recommended)
 - **pnpm**: v9 or higher
 - **PostgreSQL**: v14 or higher (local or managed instance)
-- **Telegram Developer Credentials**: Each operator needs an `api_id` and `api_hash` obtained from [my.telegram.org](https://my.telegram.org)
+- **Target Public Channel**: A public Telegram channel username (e.g. `mogesmotor`)
 
 ---
 
@@ -46,18 +45,16 @@ Before setting up Metrik, ensure you have the following installed:
 
 3. **Configure environment variables:**
 
-   Copy the example environment file and update the values:
+   Copy the example environment file:
 
    ```bash
    cp .env.example .env
    ```
 
-   Configure your PostgreSQL connection string and Telegram application credentials:
-   - `DATABASE_URL`: PostgreSQL connection string (e.g., `postgresql://postgres:postgres@localhost:5432/metrik?schema=public`)
-   - `TELEGRAM_API_ID`: Your Telegram API ID from [my.telegram.org](https://my.telegram.org)
-   - `TELEGRAM_API_HASH`: Your Telegram API Hash from [my.telegram.org](https://my.telegram.org)
-   - `TELEGRAM_CHANNEL_ID`: Channel ID or username you administer
-   - `APP_TIMEZONE`: Timezone for metric aggregation (default: `UTC`)
+   Update the configuration:
+   - `DATABASE_URL`: PostgreSQL connection string (e.g. `postgresql://postgres:postgres@localhost:5432/metrik?schema=public`)
+   - `TELEGRAM_CHANNEL_USERNAME`: Target public channel username (e.g. `mogesmotor`)
+   - `APP_TIMEZONE`: Timezone for metric date aggregation (default: `UTC`)
 
 ---
 
@@ -69,17 +66,26 @@ Before setting up Metrik, ensure you have the following installed:
 | `pnpm build` | Compiles the production build |
 | `pnpm start` | Runs the compiled production server |
 | `pnpm lint` | Runs ESLint checks |
-| `pnpm typecheck` | Validates TypeScript types across the codebase |
-| `pnpm test` | Runs the Vitest test suite |
+| `pnpm typecheck` | Validates TypeScript types |
+| `pnpm test` | Runs unit tests (Vitest) |
 | `pnpm test:watch` | Runs Vitest in watch mode |
+| `pnpm collect:public` | Executes the public channel preview collector spike |
 
 ---
 
-## Architecture & Security Notes
+## Architecture & Data Integrity Notes
 
-- **Self-Hosted & Private**: Metrik defaults to listening on `localhost`. Do not expose the dashboard publicly without configuring access protection.
-- **Direct Telegram Sessions**: Telegram authentication is handled strictly on the server side. Secrets, credentials, and session strings are never sent to the browser or logged.
-- **Accurate Metric Handling**: Missing data is treated as unavailable (`null`), never misrepresented as zero. Post reach is shown as unavailable on Telegram as it is not provided by the platform.
+- **No Personal Login Required**: The collector operates purely on public channel web previews. No user sessions or SMS codes are used.
+- **Counter Precision Handling**:
+  - Telegram public web previews display exact integer counts for values $< 1,000$ (e.g. `98`, `450`), but format values $\ge 1,000$ with metric suffixes (e.g. `1.2K`, `1.74M`).
+  - Metrik records raw displayed strings alongside parsed numeric values and explicitly tags precision as `exact`, `rounded`, or `unavailable`.
+  - Exact view deltas are strictly calculated only between observations with `exact` precision to prevent false delta reporting.
+- **Discussion Group Limitations**:
+  - Linked discussion groups and comment threads are **not accessible** via public web previews (Telegram redirects group preview requests to a join landing page).
+  - Comment counters are captured when exposed on the channel post, but full group discussion analytics are outside the scope of public preview collection.
+- **Platform Resilience**:
+  - Ingestion respects Telegram rate limits (HTTP 429) and employs bounded pagination (`maxPages`).
+  - Ingestion may be affected if Telegram modifies its public web preview HTML structure or imposes network-level request restrictions.
 
 ---
 

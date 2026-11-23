@@ -10,14 +10,14 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "spike:telegram": "node --env-file-if-exists=.env scripts/telegram-spike.ts"
+    "collect:public": "node --env-file-if-exists=.env scripts/public-collector-spike.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.4.1",
+    "cheerio": "^1.2.0",
     "next": "16.4.6",
     "react": "19.3.0",
-    "react-dom": "19.3.0",
-    "teleproto": "^1.233.0"
+    "react-dom": "19.3.0"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "4.3.3",
