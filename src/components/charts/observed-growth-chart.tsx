@@ -1,0 +1,246 @@
+import React, { useState } from "react";
+import { PrecisionBadge } from "../ui/badge";
+
+export interface DailyObservedGrowthData {
+  date: string;
+  observedGrowth: number | null;
+  isExact?: boolean;
+  reason?: string;
+}
+
+export interface ViewsGrowthCoverageData {
+  totalPosts: number;
+  eligiblePostsCount: number;
+  excludedNoBaseline: number;
+  excludedNoSubsequentObservation: number;
+  excludedRoundedOrUnavailable: number;
+  excludedNegativeDelta: number;
+}
+
+interface ObservedGrowthChartProps {
+  daily: DailyObservedGrowthData[];
+  totalGrowth: number | null;
+  isExact: boolean;
+  label: string;
+  description: string;
+  coverage: ViewsGrowthCoverageData;
+}
+
+export function ObservedGrowthChart({
+  daily,
+  totalGrowth,
+  isExact,
+  label,
+  description,
+  coverage,
+}: ObservedGrowthChartProps) {
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [showCoverageDetails, setShowCoverageDetails] = useState(false);
+
+  const validGrowths = daily
+    .map((d) => d.observedGrowth)
+    .filter((g): g is number => g !== null && g > 0);
+
+  const maxGrowth = validGrowths.length > 0 ? Math.max(...validGrowths, 10) : 10;
+
+  // Chart dimensions
+  const height = 220;
+  const paddingTop = 16;
+  const paddingBottom = 32;
+  const paddingLeft = 36;
+  const paddingRight = 16;
+  const chartHeight = height - paddingTop - paddingBottom;
+
+  const yTicks = [0, Math.ceil(maxGrowth / 2), maxGrowth];
+
+  return (
+    <div className="p-5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-xs">
+      <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
+        <div className="max-w-xl">
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{label}</h3>
+            {totalGrowth !== null && <PrecisionBadge precision={isExact ? "EXACT" : "ROUNDED"} />}
+          </div>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 leading-relaxed">
+            {description}
+          </p>
+        </div>
+
+        <div className="text-right">
+          <div className="text-xs text-zinc-500 dark:text-zinc-400">Total Period Growth</div>
+          <div className="text-xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400">
+            {totalGrowth !== null ? `+${totalGrowth.toLocaleString()}` : "Unavailable"}
+          </div>
+        </div>
+      </div>
+
+      {/* Coverage Status Strip */}
+      <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 mb-4 rounded-lg bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-100 dark:border-zinc-800 text-xs">
+        <div className="flex items-center gap-4 text-zinc-600 dark:text-zinc-300">
+          <span>
+            Eligible posts:{" "}
+            <strong className="text-emerald-600 dark:text-emerald-400 font-semibold">
+              {coverage.eligiblePostsCount}
+            </strong>{" "}
+            / {coverage.totalPosts}
+          </span>
+          {coverage.totalPosts - coverage.eligiblePostsCount > 0 && (
+            <span className="text-zinc-500">
+              ({coverage.totalPosts - coverage.eligiblePostsCount} excluded)
+            </span>
+          )}
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setShowCoverageDetails((prev) => !prev)}
+          className="text-xs text-blue-600 dark:text-blue-400 hover:underline cursor-pointer font-medium"
+        >
+          {showCoverageDetails ? "Hide audit details" : "Coverage breakdown"}
+        </button>
+      </div>
+
+      {showCoverageDetails && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4 p-3 rounded-lg bg-zinc-100/70 dark:bg-zinc-800/80 text-xs text-zinc-700 dark:text-zinc-300">
+          <div>
+            <div className="text-[11px] text-zinc-500">Excluded (No baseline):</div>
+            <div className="font-semibold">{coverage.excludedNoBaseline}</div>
+          </div>
+          <div>
+            <div className="text-[11px] text-zinc-500">Excluded (No later sync):</div>
+            <div className="font-semibold">{coverage.excludedNoSubsequentObservation}</div>
+          </div>
+          <div>
+            <div className="text-[11px] text-zinc-500">Excluded (Rounded/Unavailable):</div>
+            <div className="font-semibold">{coverage.excludedRoundedOrUnavailable}</div>
+          </div>
+          <div>
+            <div className="text-[11px] text-zinc-500">Excluded (Negative drop anomaly):</div>
+            <div className="font-semibold text-rose-500">{coverage.excludedNegativeDelta}</div>
+          </div>
+        </div>
+      )}
+
+      {/* Chart SVG */}
+      <div className="relative w-full overflow-hidden">
+        <svg
+          viewBox={`0 0 600 ${height}`}
+          className="w-full h-56 select-none"
+          preserveAspectRatio="none"
+        >
+          {/* Y Axis Grid lines & Labels */}
+          {yTicks.map((tick) => {
+            const y = paddingTop + chartHeight - (tick / maxGrowth) * chartHeight;
+            return (
+              <g key={tick}>
+                <line
+                  x1={paddingLeft}
+                  y1={y}
+                  x2={600 - paddingRight}
+                  y2={y}
+                  stroke="currentColor"
+                  strokeDasharray="3 3"
+                  className="text-zinc-100 dark:text-zinc-800"
+                />
+                <text
+                  x={paddingLeft - 6}
+                  y={y + 3}
+                  textAnchor="end"
+                  className="fill-zinc-400 text-[10px]"
+                >
+                  +{tick}
+                </text>
+              </g>
+            );
+          })}
+
+          {/* Daily Elements */}
+          {daily.map((item, index) => {
+            const slotWidth = (600 - paddingLeft - paddingRight) / daily.length;
+            const barWidth = Math.max(Math.min(slotWidth * 0.65, 32), 6);
+            const x = paddingLeft + index * slotWidth + (slotWidth - barWidth) / 2;
+            const hasGrowth = item.observedGrowth !== null && item.observedGrowth > 0;
+            const barHeight = hasGrowth ? (item.observedGrowth! / maxGrowth) * chartHeight : 0;
+            const y = paddingTop + chartHeight - barHeight;
+            const isHovered = hoveredIndex === index;
+
+            return (
+              <g
+                key={item.date}
+                className="cursor-pointer"
+                onMouseEnter={() => setHoveredIndex(index)}
+                onMouseLeave={() => setHoveredIndex(null)}
+              >
+                {/* Background hover highlight */}
+                <rect
+                  x={paddingLeft + index * slotWidth}
+                  y={paddingTop}
+                  width={slotWidth}
+                  height={chartHeight}
+                  fill={isHovered ? "currentColor" : "transparent"}
+                  className="text-zinc-50 dark:text-zinc-800/40 transition-colors"
+                />
+
+                {/* Growth Bar */}
+                {hasGrowth ? (
+                  <rect
+                    x={x}
+                    y={y}
+                    width={barWidth}
+                    height={Math.max(barHeight, 2)}
+                    rx={2}
+                    className={`transition-colors ${
+                      isHovered
+                        ? "fill-emerald-500 dark:fill-emerald-400"
+                        : "fill-emerald-600 dark:fill-emerald-500"
+                    }`}
+                  />
+                ) : (
+                  /* Dot / dashed line for baseline or unobserved day */
+                  <circle
+                    cx={x + barWidth / 2}
+                    cy={paddingTop + chartHeight}
+                    r={2.5}
+                    className={
+                      item.reason === "Baseline establishment only"
+                        ? "fill-amber-400 dark:fill-amber-500"
+                        : "fill-zinc-300 dark:fill-zinc-700"
+                    }
+                  />
+                )}
+
+                {/* X Axis Label */}
+                {(daily.length <= 14 || index % Math.ceil(daily.length / 8) === 0) && (
+                  <text
+                    x={paddingLeft + index * slotWidth + slotWidth / 2}
+                    y={height - 10}
+                    textAnchor="middle"
+                    className="fill-zinc-400 text-[10px]"
+                  >
+                    {item.date.slice(5)}
+                  </text>
+                )}
+              </g>
+            );
+          })}
+        </svg>
+
+        {/* Hover Tooltip Overlay */}
+        {hoveredIndex !== null && daily[hoveredIndex] && (
+          <div className="absolute top-2 left-1/2 -translate-x-1/2 px-2.5 py-1.5 rounded-lg bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 text-xs shadow-md pointer-events-none transition-all z-10">
+            <div className="font-semibold">{daily[hoveredIndex].date}</div>
+            <div className="text-[11px] opacity-90">
+              {daily[hoveredIndex].observedGrowth !== null ? (
+                <span>+{daily[hoveredIndex].observedGrowth} observed views</span>
+              ) : (
+                <span className="italic text-zinc-300 dark:text-zinc-600">
+                  {daily[hoveredIndex].reason || "No verified delta"}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

@@ -1,5 +1,11 @@
 import { NextResponse } from "next/server";
 import { timingSafeEqual } from "node:crypto";
+import {
+  SESSION_COOKIE_NAME,
+  extractCookie,
+  verifySessionToken,
+  getSessionSigningKey,
+} from "./session";
 
 export interface AuthCheckResult {
   authorized: boolean;
@@ -56,7 +62,9 @@ export function extractClientCredential(request: Request): string | null {
  *
  * Rules:
  * - Server password missing/empty: 503 SERVER_MISCONFIGURED
- * - Client credential missing/invalid: 401 UNAUTHORIZED
+ * - Authorized if valid Bearer / x-admin-password credential matches server password
+ * - Authorized if valid signed HTTP-only session cookie is present
+ * - Missing or invalid credentials/session: 401 UNAUTHORIZED
  * - Timing-safe comparison without logging secrets
  */
 export function validateApiAccess(
@@ -85,9 +93,13 @@ export function validateApiAccess(
     };
   }
 
-  // 2. Extract credential from client headers
+  // 2. Extract credential from client headers (CLI, scripts, curl)
   const clientCredential = extractClientCredential(request);
-  if (!clientCredential) {
+  if (clientCredential) {
+    const isValid = safeCompareSecret(clientCredential, serverPassword.trim());
+    if (isValid) {
+      return { authorized: true };
+    }
     return {
       authorized: false,
       response: NextResponse.json(
@@ -103,23 +115,33 @@ export function validateApiAccess(
     };
   }
 
-  // 3. Constant-time comparison
-  const isValid = safeCompareSecret(clientCredential, serverPassword.trim());
-  if (!isValid) {
-    return {
-      authorized: false,
-      response: NextResponse.json(
-        {
-          error: {
-            code: "UNAUTHORIZED",
-            message:
-              "Valid administration credentials are required to access this resource.",
-          },
-        },
-        { status: 401 }
-      ),
-    };
+  // 3. Check for signed session cookie (browser client)
+  const cookieHeader = request.headers.get("cookie");
+  const sessionToken = extractCookie(cookieHeader, SESSION_COOKIE_NAME);
+  if (sessionToken) {
+    try {
+      const signingKey = getSessionSigningKey(serverPassword.trim());
+      const session = verifySessionToken(sessionToken, signingKey);
+      if (session) {
+        return { authorized: true };
+      }
+    } catch {
+      // Session verification failure falls through to 401
+    }
   }
 
-  return { authorized: true };
+  // 4. Missing or invalid authentication
+  return {
+    authorized: false,
+    response: NextResponse.json(
+      {
+        error: {
+          code: "UNAUTHORIZED",
+          message:
+            "Valid administration credentials are required to access this resource.",
+        },
+      },
+      { status: 401 }
+    ),
+  };
 }

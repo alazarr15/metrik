@@ -76,6 +76,17 @@ Metrik is a self-hosted, open-source analytics dashboard that collects and visua
 
 ---
 
+## Dashboard UI & Authentication
+
+Metrik includes a responsive web dashboard for inspecting channel metrics:
+- **Authentication**: Access is guarded by `DASHBOARD_ADMIN_PASSWORD`. Browser clients authenticate at `/login` which establishes a signed, expiring `HttpOnly` session cookie (`SameSite=Strict`, `Path=/`).
+- **Channel Selector & Period Filtering**: Supports viewing any tracked Telegram channel with date range presets (`7d`, `30d`, `90d`).
+- **Metrics & Precision Breakdown**: Visualizes Posts Published, Lifetime Views (exact sums vs. rounded estimates), and Reach (`UNAVAILABLE`).
+- **Observed Views Growth**: Displays verified non-negative view deltas between exact post observations, with complete coverage reporting and anomaly isolation.
+- **Posts Table & Audit Timeline**: Paginated post inspection with point-in-time observation history modals.
+
+---
+
 ## Analytics API Endpoints
 
 Metrik provides five read-only REST endpoints under `/api/`. All endpoints require authentication via `DASHBOARD_ADMIN_PASSWORD` sent as `Authorization: Bearer <password>` or `x-admin-password: <password>` (missing server password fails closed with HTTP 503; invalid/missing client credential returns HTTP 401).
