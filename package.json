@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "collect:public": "node --env-file-if-exists=.env scripts/public-collector-spike.ts"
+    "collect:public": "node --env-file-if-exists=.env scripts/public-collector-spike.ts",
+    "sync:telegram": "node --env-file-if-exists=.env scripts/sync-channel.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.4.1",

@@ -70,6 +70,7 @@ Metrik is a self-hosted, open-source analytics dashboard that collects and visua
 | `pnpm test` | Runs unit tests (Vitest) |
 | `pnpm test:watch` | Runs Vitest in watch mode |
 | `pnpm collect:public` | Executes the public channel preview collector spike |
+| `pnpm sync:telegram` | Synchronizes channel posts and metrics into PostgreSQL |
 | `pnpm prisma generate` | Generates the Prisma Client |
 | `pnpm prisma migrate dev` | Applies pending database migrations in development |
 
