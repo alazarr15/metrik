@@ -7,7 +7,7 @@ import {
   normalizeTelegramPost,
   summarizePostMetrics,
   type NormalizedTelegramPost,
-} from "../src/lib/telegram-data";
+} from "../src/lib/telegram-data.ts";
 
 const SESSION_DIR = path.resolve(process.cwd(), ".sessions");
 const SESSION_FILE = path.join(SESSION_DIR, "telegram.session");
