@@ -1,4 +1,9 @@
-import { syncPublicChannel } from "../src/server/db/sync-service.ts";
+import {
+  syncPublicChannel,
+  resolveSyncMaxPages,
+  DEFAULT_SYNC_MAX_PAGES,
+  MAX_ALLOWED_SYNC_PAGES,
+} from "../src/server/db/sync-service.ts";
 import { prisma } from "../src/server/db/client.ts";
 
 async function main() {
@@ -7,13 +12,30 @@ async function main() {
   const targetChannel = channelArg || channelFromEnv;
 
   if (!targetChannel) {
-    console.error("Error: No Telegram channel username provided.");
+    console.error("==========================================");
+    console.error("  Error: No Channel Configured");
+    console.error("==========================================");
     console.error("Provide a channel username as an argument or set TELEGRAM_CHANNEL_USERNAME in .env");
-    console.error("Usage: pnpm sync:telegram [channel_username]");
+    console.error("Usage: pnpm sync:telegram [channel_username] [max_pages]");
+    console.error("Example: pnpm sync:telegram mogesmotor 2");
+    console.error("==========================================\n");
     process.exit(1);
   }
 
-  const maxPages = process.env.SYNC_MAX_PAGES ? parseInt(process.env.SYNC_MAX_PAGES, 10) : 1;
+  let maxPages: number;
+  try {
+    maxPages = resolveSyncMaxPages(process.argv[3], process.env.SYNC_MAX_PAGES);
+  } catch (err) {
+    console.error("==========================================");
+    console.error("  Configuration Error: Invalid Page Count");
+    console.error("==========================================");
+    console.error(err instanceof Error ? err.message : String(err));
+    console.error(`Page count must be a positive integer between 1 and ${MAX_ALLOWED_SYNC_PAGES} (default: ${DEFAULT_SYNC_MAX_PAGES}).`);
+    console.error("Usage: pnpm sync:telegram [channel_username] [max_pages]");
+    console.error("Example: pnpm sync:telegram mogesmotor 2");
+    console.error("==========================================\n");
+    process.exit(1);
+  }
 
   console.log(`Starting synchronization for public channel: @${targetChannel.replace(/^@/, "")}`);
   console.log(`Pagination limit: ${maxPages} page(s)\n`);

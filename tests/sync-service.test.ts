@@ -2,6 +2,10 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   syncPublicChannel,
   SyncExecutionError,
+  resolveSyncMaxPages,
+  PaginationValidationError,
+  DEFAULT_SYNC_MAX_PAGES,
+  MAX_ALLOWED_SYNC_PAGES,
 } from "../src/server/db/sync-service.ts";
 import { SyncStatus, MetricType, MetricPrecision, type PrismaClient } from "@prisma/client";
 
@@ -446,5 +450,53 @@ describe("Sync Service: Public Channel Database Synchronization", () => {
     const failedRun = allRuns[allRuns.length - 1];
     expect(failedRun.status).toBe(SyncStatus.FAILED);
     expect(failedRun.errorMessage).toContain("Database write lock conflict or disk error");
+  });
+});
+
+describe("Pagination Configuration & Boundary Validation", () => {
+  it("defaults to 2 pages when neither CLI arg nor ENV is provided", () => {
+    expect(resolveSyncMaxPages()).toBe(2);
+    expect(resolveSyncMaxPages(undefined, undefined)).toBe(2);
+    expect(resolveSyncMaxPages("", "")).toBe(2);
+    expect(DEFAULT_SYNC_MAX_PAGES).toBe(2);
+  });
+
+  it("prioritizes CLI argument over environment variable", () => {
+    // CLI = 3, ENV = 5 -> CLI wins (3)
+    expect(resolveSyncMaxPages("3", "5")).toBe(3);
+    expect(resolveSyncMaxPages(4, "1")).toBe(4);
+  });
+
+  it("falls back to environment variable when CLI argument is omitted", () => {
+    expect(resolveSyncMaxPages(undefined, "4")).toBe(4);
+    expect(resolveSyncMaxPages("", "5")).toBe(5);
+  });
+
+  it("accepts valid integer values between 1 and 10", () => {
+    expect(resolveSyncMaxPages(1)).toBe(1);
+    expect(resolveSyncMaxPages("1")).toBe(1);
+    expect(resolveSyncMaxPages(5)).toBe(5);
+    expect(resolveSyncMaxPages(10)).toBe(10);
+    expect(resolveSyncMaxPages("10")).toBe(10);
+  });
+
+  it("rejects non-integer and non-numeric values", () => {
+    expect(() => resolveSyncMaxPages("abc")).toThrow(PaginationValidationError);
+    expect(() => resolveSyncMaxPages("2.5")).toThrow(PaginationValidationError);
+    expect(() => resolveSyncMaxPages("NaN")).toThrow(PaginationValidationError);
+  });
+
+  it("rejects zero and negative page counts", () => {
+    expect(() => resolveSyncMaxPages(0)).toThrow(PaginationValidationError);
+    expect(() => resolveSyncMaxPages("0")).toThrow(PaginationValidationError);
+    expect(() => resolveSyncMaxPages(-1)).toThrow(PaginationValidationError);
+    expect(() => resolveSyncMaxPages("-5")).toThrow(PaginationValidationError);
+  });
+
+  it("rejects values exceeding maximum limit of 10 pages", () => {
+    expect(MAX_ALLOWED_SYNC_PAGES).toBe(10);
+    expect(() => resolveSyncMaxPages(11)).toThrow(PaginationValidationError);
+    expect(() => resolveSyncMaxPages("15")).toThrow(PaginationValidationError);
+    expect(() => resolveSyncMaxPages(100)).toThrow(PaginationValidationError);
   });
 });

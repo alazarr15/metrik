@@ -13,6 +13,60 @@ import {
   sanitizeSyncRunError,
 } from "./integrity.ts";
 
+export const DEFAULT_SYNC_MAX_PAGES = 2;
+export const MAX_ALLOWED_SYNC_PAGES = 10;
+
+export class PaginationValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "PaginationValidationError";
+  }
+}
+
+/**
+ * Resolves and validates maximum pages to synchronize with the following precedence:
+ * 1. CLI argument (e.g. process.argv[3])
+ * 2. Environment variable (SYNC_MAX_PAGES)
+ * 3. Default (2)
+ *
+ * Rules:
+ * - Must be an integer.
+ * - Must be >= 1.
+ * - Must be <= 10.
+ */
+export function resolveSyncMaxPages(
+  cliArg?: string | number,
+  envVar?: string
+): number {
+  const candidate = cliArg !== undefined && cliArg !== "" ? cliArg : envVar;
+
+  if (candidate === undefined || candidate === null || candidate === "") {
+    return DEFAULT_SYNC_MAX_PAGES;
+  }
+
+  const num = typeof candidate === "number" ? candidate : Number(candidate.toString().trim());
+
+  if (!Number.isInteger(num)) {
+    throw new PaginationValidationError(
+      `Invalid page count: "${candidate}". Must be an integer between 1 and ${MAX_ALLOWED_SYNC_PAGES}.`
+    );
+  }
+
+  if (num < 1) {
+    throw new PaginationValidationError(
+      `Invalid page count: ${num}. Page count must be a positive integer (minimum 1).`
+    );
+  }
+
+  if (num > MAX_ALLOWED_SYNC_PAGES) {
+    throw new PaginationValidationError(
+      `Page count ${num} exceeds maximum allowed limit of ${MAX_ALLOWED_SYNC_PAGES} pages.`
+    );
+  }
+
+  return num;
+}
+
 export interface SyncOptions {
   maxPages?: number;
   customFetch?: typeof fetch;
@@ -91,8 +145,9 @@ export async function syncPublicChannel(
 
   try {
     // 3. Fetch public channel posts via bounded collector
+    const maxPages = resolveSyncMaxPages(options?.maxPages);
     const fetchResult = await fetchPublicChannelPosts(cleanUsername, {
-      maxPages: options?.maxPages ?? 1,
+      maxPages,
       customFetch: options?.customFetch,
     });
 

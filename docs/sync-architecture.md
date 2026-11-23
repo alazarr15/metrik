@@ -7,10 +7,11 @@ Metrik connects the login-free public Telegram channel collector directly to Pos
 ## Synchronization Workflow
 
 ```
-[ User / CLI (`pnpm sync:telegram [channel]`) ]
+[ User / CLI (`pnpm sync:telegram [channel] [pages]`) ]
                        │
                        ▼
          [ validateChannelUsername ]
+         [ resolveSyncMaxPages (CLI > ENV > Default 2, max 10) ]
                        │
                        ▼
        [ Channel Upsert (default: Africa/Addis_Ababa) ]
