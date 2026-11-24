@@ -2,8 +2,7 @@ name: Scheduled Telegram Tracking
 
 on:
   schedule:
-    # Run every 30 minutes (00, 30 past each hour UTC)
-    - cron: "*/30 * * * *"
+    - cron: "7,22,37,52 * * * *"
   workflow_dispatch:
     # Allow manual execution from GitHub Actions UI
 
