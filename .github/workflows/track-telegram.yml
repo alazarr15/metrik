@@ -1,0 +1,54 @@
+name: Scheduled Telegram Tracking
+
+on:
+  schedule:
+    # Run every 30 minutes (00, 30 past each hour UTC)
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+    # Allow manual execution from GitHub Actions UI
+
+# Ensure only one tracking workflow runs at a time to prevent overlapping executions
+concurrency:
+  group: track-telegram
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  track:
+    name: Sync Telegram Channels
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js (v22)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma Client
+        run: pnpm prisma generate
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
+
+      - name: Execute one-shot Telegram tracking
+        run: pnpm track:telegram:once
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
+          TELEGRAM_CHANNEL_USERNAME: ${{ secrets.TELEGRAM_CHANNEL_USERNAME || 'mogesmotor' }}
+          APP_TIMEZONE: ${{ secrets.APP_TIMEZONE || 'Africa/Addis_Ababa' }}
+          SYNC_MAX_PAGES: ${{ secrets.SYNC_MAX_PAGES || '2' }}
+          NODE_ENV: production

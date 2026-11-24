@@ -74,9 +74,11 @@ Metrik is a self-hosted, open-source analytics dashboard that collects and visua
 | `pnpm sync:telegram` | Synchronizes channel posts and metrics into PostgreSQL (`pnpm sync:telegram [channel] [pages]`, default: 2 pages, supports `--initial-7d`) |
 | `pnpm bootstrap:telegram` | Executes 7-day historical bootstrap for channel (`pnpm bootstrap:telegram [channel]`) |
 | `pnpm track:telegram` | Starts the continuous background tracking worker (polls every 30 minutes by default) |
+| `pnpm track:telegram:once` | Executes a single one-shot sync across all channels (used by GitHub Actions) |
 | `pnpm retention:prune` | Prunes redundant historical observations older than 60 days while preserving baseline anchors (`pnpm retention:prune [channel] [days]`) |
 | `pnpm prisma generate` | Generates the Prisma Client |
 | `pnpm prisma migrate dev` | Applies pending database migrations in development |
+| `pnpm prisma migrate deploy` | Applies pending database migrations in production |
 
 ---
 
@@ -151,6 +153,42 @@ For complete API specifications, timezone semantics, and calculation algorithms,
 - **Platform Resilience**:
   - Ingestion respects Telegram rate limits (HTTP 429) and employs bounded pagination (`maxPages`).
   - Ingestion may be affected if Telegram modifies its public web preview HTML structure or imposes network-level request restrictions.
+
+---
+
+## Production Deployment ($0/month Hosting)
+
+Metrik is configured for zero-cost ($0/month) open-source deployment using free tiers:
+
+- **Web Service Hosting**: [Render.com](https://render.com) (Next.js App Router Web Service).
+- **PostgreSQL Database**: [Supabase](https://supabase.com) (Managed PostgreSQL with PgBouncer connection pooling).
+- **Scheduled Synchronization**: [GitHub Actions](https://github.com/features/actions) (Runs `pnpm track:telegram:once` every 30 minutes via `.github/workflows/track-telegram.yml`).
+
+For comprehensive step-by-step instructions, see [docs/deployment.md](docs/deployment.md).
+
+---
+
+## Known Limitations
+
+- **Reach Unavailable**: Telegram broadcast channels do not expose unique reach or impression metrics via public preview or standard bot APIs. Reach is strictly labeled as `UNAVAILABLE`.
+- **Approximate Large Counters**: Post views $\ge 1,000$ are rounded by Telegram (e.g. `1.2K`, `1.74M`). Metrik stores both raw displayed strings and parsed integers, but never calculates exact view growth from rounded counters.
+- **Free-Tier Inactivity**: On the Render free tier, web services spin down after 15 minutes of inactivity; the first request after spin-down incurs a ~40-second cold start. Background tracking runs independently via GitHub Actions and is unaffected by Render spin-down.
+- **Single-Platform Scope (Current Phase)**: Currently supports public Telegram broadcast channels. Multi-platform support (e.g. Facebook, YouTube) is planned for future phases using the same underlying analytics and scheduling architecture.
+
+---
+
+## Contributing
+
+1. Fork the repository and create your branch from `main`.
+2. Follow code standards: strict TypeScript, pure metric functions with Vitest unit tests, and minimal dependencies.
+3. Ensure all checks pass before submitting a Pull Request:
+   ```bash
+   pnpm test
+   pnpm lint
+   pnpm typecheck
+   pnpm build
+   ```
+4. Never commit real credentials, database passwords, or `.env` files.
 
 ---
 

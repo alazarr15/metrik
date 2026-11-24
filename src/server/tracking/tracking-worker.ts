@@ -15,6 +15,25 @@ export interface WorkerStatusSummary {
   status: "RUNNING" | "STOPPED" | "UNAVAILABLE";
 }
 
+export interface ChannelPollResult {
+  channelId: string;
+  telegramUsername: string;
+  status: "SUCCESS" | "FAILED" | "SKIPPED";
+  type: "BOOTSTRAP" | "SYNC";
+  postsFetched: number;
+  postsCreated?: number;
+  observationsCreated?: number;
+  errorMessage?: string;
+}
+
+export interface PollCycleResult {
+  channelsCount: number;
+  successCount: number;
+  failureCount: number;
+  skippedCount: number;
+  results: ChannelPollResult[];
+}
+
 export class TrackingWorker {
   private readonly db: PrismaClient;
   private readonly pollIntervalMinutes: number;
@@ -95,10 +114,19 @@ export class TrackingWorker {
   /**
    * Executes one polling cycle across all configured channels.
    */
-  public async runPollCycle(): Promise<void> {
-    if (this.isShuttingDown) return;
+  public async runPollCycle(): Promise<PollCycleResult> {
+    const results: ChannelPollResult[] = [];
+    if (this.isShuttingDown) {
+      return {
+        channelsCount: 0,
+        successCount: 0,
+        failureCount: 0,
+        skippedCount: 0,
+        results,
+      };
+    }
 
-    const channels = await this.db.channel.findMany({
+    let channels = await this.db.channel.findMany({
       select: {
         id: true,
         telegramUsername: true,
@@ -107,34 +135,92 @@ export class TrackingWorker {
       },
     });
 
+    // Auto-initialize channel from TELEGRAM_CHANNEL_USERNAME if database has zero channels
+    if (channels.length === 0 && process.env.TELEGRAM_CHANNEL_USERNAME) {
+      const defaultUsername = process.env.TELEGRAM_CHANNEL_USERNAME.trim().replace(/^@/, "");
+      if (defaultUsername) {
+        const created = await this.db.channel.upsert({
+          where: { telegramUsername: defaultUsername },
+          create: {
+            telegramUsername: defaultUsername,
+            timezone: process.env.APP_TIMEZONE || "Africa/Addis_Ababa",
+          },
+          update: {},
+          select: {
+            id: true,
+            telegramUsername: true,
+            bootstrapStatus: true,
+            lastSyncedAt: true,
+          },
+        });
+        channels = [created];
+      }
+    }
+
     const now = Date.now();
 
     for (const channel of channels) {
       if (this.isShuttingDown) break;
 
-      // 1. Prevent overlapping synchronization for the same channel
+      // 1. Prevent overlapping synchronization within this process
       if (this.inFlightChannels.has(channel.id)) {
+        results.push({
+          channelId: channel.id,
+          telegramUsername: channel.telegramUsername,
+          status: "SKIPPED",
+          type: channel.bootstrapStatus !== "COMPLETED" ? "BOOTSTRAP" : "SYNC",
+          postsFetched: 0,
+          errorMessage: "Channel is already in-flight in this process.",
+        });
         continue;
       }
 
-      // 2. Check backoff for rate-limited channels
+      // 2. Prevent cross-process overlapping synchronization (database-level check for active running sync)
+      const activeSyncRun = await this.db.syncRun.findFirst({
+        where: {
+          channelId: channel.id,
+          status: "RUNNING",
+          startedAt: { gte: new Date(now - 10 * 60 * 1000) },
+        },
+      });
+
+      if (activeSyncRun) {
+        results.push({
+          channelId: channel.id,
+          telegramUsername: channel.telegramUsername,
+          status: "SKIPPED",
+          type: channel.bootstrapStatus !== "COMPLETED" ? "BOOTSTRAP" : "SYNC",
+          postsFetched: 0,
+          errorMessage: `Another sync run (${activeSyncRun.id}) is actively in progress.`,
+        });
+        continue;
+      }
+
+      // 3. Check backoff for rate-limited channels
       const backoffUntil = this.channelBackoffs.get(channel.id);
       if (backoffUntil && now < backoffUntil) {
+        results.push({
+          channelId: channel.id,
+          telegramUsername: channel.telegramUsername,
+          status: "SKIPPED",
+          type: channel.bootstrapStatus !== "COMPLETED" ? "BOOTSTRAP" : "SYNC",
+          postsFetched: 0,
+          errorMessage: `Channel rate-limit backoff in effect until ${new Date(backoffUntil).toISOString()}.`,
+        });
         continue;
       }
 
-      // 3. Lock channel
+      // 4. Lock channel
       this.inFlightChannels.add(channel.id);
 
       try {
-        // Step A: If channel has not completed initial 7-day bootstrap, run bootstrap first
         if (channel.bootstrapStatus !== "COMPLETED") {
+          // Step A: If channel has not completed initial 7-day bootstrap, run bootstrap first
           const bootstrapResult = await runChannelBootstrap(channel.telegramUsername, {
             prisma: this.db,
             maxPages: 10,
           });
 
-          // Calculate next scheduled sync
           const nextPollAt = new Date(Date.now() + this.pollIntervalMs);
           await this.db.channel.update({
             where: { id: channel.id },
@@ -144,13 +230,19 @@ export class TrackingWorker {
             },
           });
 
-          if (!bootstrapResult.cutoffReached) {
-            // Keep backoff clean if incomplete
-          }
+          results.push({
+            channelId: channel.id,
+            telegramUsername: channel.telegramUsername,
+            status: bootstrapResult.success ? "SUCCESS" : "FAILED",
+            type: "BOOTSTRAP",
+            postsFetched: bootstrapResult.postsFetched,
+            postsCreated: bootstrapResult.postsCreated,
+            observationsCreated: bootstrapResult.observationsCreated,
+            errorMessage: bootstrapResult.errorMessage,
+          });
         } else {
           // Step B: Continuous tracking sync (recent 2 pages)
-          // Fetch latest posts and detect new posts / changes in metrics
-          await syncPublicChannel(channel.telegramUsername, {
+          const syncResult = await syncPublicChannel(channel.telegramUsername, {
             prisma: this.db,
             maxPages: 2,
           });
@@ -163,11 +255,23 @@ export class TrackingWorker {
               nextPollAt,
             },
           });
+
+          results.push({
+            channelId: channel.id,
+            telegramUsername: channel.telegramUsername,
+            status: "SUCCESS",
+            type: "SYNC",
+            postsFetched: syncResult.postsFetched,
+            postsCreated: syncResult.postsCreated,
+            observationsCreated: syncResult.observationsCreated,
+          });
         }
 
         // Clear any prior backoff on success
         this.channelBackoffs.delete(channel.id);
       } catch (err: unknown) {
+        const errMsg = err instanceof Error ? err.message : String(err);
+
         if (err instanceof PublicChannelRateLimitError) {
           // Apply 5-minute backoff for HTTP 429
           const backoffMs = 5 * 60 * 1000;
@@ -182,16 +286,33 @@ export class TrackingWorker {
           const backoffMs = 2 * 60 * 1000;
           this.channelBackoffs.set(channel.id, Date.now() + backoffMs);
         }
+
+        results.push({
+          channelId: channel.id,
+          telegramUsername: channel.telegramUsername,
+          status: "FAILED",
+          type: channel.bootstrapStatus !== "COMPLETED" ? "BOOTSTRAP" : "SYNC",
+          postsFetched: 0,
+          errorMessage: errMsg,
+        });
       } finally {
         this.inFlightChannels.delete(channel.id);
       }
     }
+
+    return {
+      channelsCount: channels.length,
+      successCount: results.filter((r) => r.status === "SUCCESS").length,
+      failureCount: results.filter((r) => r.status === "FAILED").length,
+      skippedCount: results.filter((r) => r.status === "SKIPPED").length,
+      results,
+    };
   }
 
   /**
    * Updates the worker heartbeat row in the database.
    */
-  private async updateHeartbeat(status: "RUNNING" | "STOPPED"): Promise<void> {
+  public async updateHeartbeat(status: "RUNNING" | "STOPPED"): Promise<void> {
     await this.db.workerHeartbeat.upsert({
       where: { id: "singleton" },
       create: {
@@ -286,5 +407,40 @@ export async function getTrackingWorkerStatus(
       pollIntervalMinutes: resolvePollIntervalMinutes(),
       status: "UNAVAILABLE",
     };
+  }
+}
+
+/**
+ * Executes a one-shot tracking cycle across eligible channels.
+ * Designed for scheduled execution (e.g. GitHub Actions every 30 minutes).
+ *
+ * - Does not start recurring background timers or infinite loops.
+ * - Records WorkerHeartbeat during execution.
+ * - Runs 7-day bootstrap first if channel is incomplete.
+ * - Runs 2-page incremental sync if bootstrap is complete.
+ * - Safely coordinates with concurrent runs via database and memory locks.
+ * - Returns structured PollCycleResult.
+ */
+export async function runOneShotTracking(options?: {
+  prisma?: PrismaClient;
+  workerId?: string;
+  pollIntervalMinutes?: number;
+}): Promise<PollCycleResult> {
+  const worker = new TrackingWorker({
+    prisma: options?.prisma,
+    workerId: options?.workerId ?? `oneshot-${process.pid}-${Date.now()}`,
+    pollIntervalMinutes: options?.pollIntervalMinutes,
+  });
+
+  await worker.updateHeartbeat("RUNNING");
+  try {
+    const result = await worker.runPollCycle();
+    return result;
+  } finally {
+    try {
+      await worker.updateHeartbeat("STOPPED");
+    } catch {
+      // Non-fatal
+    }
   }
 }

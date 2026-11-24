@@ -14,6 +14,7 @@
     "sync:telegram": "node --env-file-if-exists=.env scripts/sync-channel.ts",
     "bootstrap:telegram": "node --env-file-if-exists=.env scripts/bootstrap-channel.ts",
     "track:telegram": "node --env-file-if-exists=.env scripts/tracking-worker.ts",
+    "track:telegram:once": "node --env-file-if-exists=.env scripts/track-telegram-once.ts",
     "retention:prune": "node --env-file-if-exists=.env scripts/prune-retention.ts"
   },
   "dependencies": {

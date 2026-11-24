@@ -172,5 +172,37 @@ describe("TrackingWorker and WorkerStatus", () => {
         })
       );
     });
+
+    it("skips channels that already have an active RUNNING sync run", async () => {
+      const mockPrisma = {
+        channel: {
+          findMany: vi.fn().mockResolvedValue([
+            {
+              id: "chan-busy",
+              telegramUsername: "busychannel",
+              bootstrapStatus: "COMPLETED",
+              lastSyncedAt: new Date(),
+            },
+          ]),
+        },
+        syncRun: {
+          findFirst: vi.fn().mockResolvedValue({
+            id: "active-sync-1",
+            status: "RUNNING",
+            startedAt: new Date(),
+          }),
+        },
+      } as unknown as PrismaClient;
+
+      const worker = new TrackingWorker({
+        prisma: mockPrisma,
+      });
+
+      const summary = await worker.runPollCycle();
+      expect(summary.channelsCount).toBe(1);
+      expect(summary.skippedCount).toBe(1);
+      expect(summary.results[0].status).toBe("SKIPPED");
+      expect(summary.results[0].errorMessage).toContain("is actively in progress");
+    });
   });
 });
