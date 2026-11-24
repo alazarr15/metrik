@@ -108,7 +108,7 @@ describe("Phase 4 Read-Only API Route Handlers", () => {
       expect(json.error.code).toBe("INVALID_IDENTIFIER");
     });
 
-    it("returns channel details and summary for existing channel handle", async () => {
+    it("returns channel details, summary, and coverage for existing channel handle", async () => {
       const req = new Request("http://localhost:3000/api/channels/mogesmotor", {
         headers: authHeaders,
       });
@@ -125,6 +125,16 @@ describe("Phase 4 Read-Only API Route Handlers", () => {
         reason: "Reach is unavailable on Telegram broadcast channels",
       });
       expect(typeof data.summary.postsPublishedTotal).toBe("number");
+
+      // Phase 7 Coverage assertions
+      expect(data).toHaveProperty("coverage");
+      expect(data.coverage).not.toBeNull();
+      expect(data.coverage.rangeAvailability["1d"].isAvailable).toBe(true);
+      expect(data.coverage.rangeAvailability["7d"].isAvailable).toBe(true);
+      expect(data.coverage.rangeAvailability["15d"].isAvailable).toBe(false);
+      expect(data.coverage.rangeAvailability["30d"].isAvailable).toBe(false);
+      expect(data.coverage.rangeAvailability["60d"].isAvailable).toBe(false);
+      expect(data.coverage.longestAvailablePreset).toBe("7d");
     });
   });
 
@@ -245,6 +255,13 @@ describe("Phase 4 Read-Only API Route Handlers", () => {
         value: null,
         reason: "Reach is unavailable on Telegram broadcast channels",
       });
+
+      // Phase 7 Coverage metadata in analytics response
+      expect(data).toHaveProperty("coverage");
+      expect(data.coverage).not.toBeNull();
+      expect(data.coverage.isRangeAvailable).toBe(false); // 30d is unavailable for initial baseline
+      expect(data.coverage.reason).toContain("30 days");
+      expect(data.coverage.longestAvailablePreset).toBe("7d");
     });
   });
 

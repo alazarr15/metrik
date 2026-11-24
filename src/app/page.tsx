@@ -46,6 +46,45 @@ interface ChannelOverviewData {
     pagesFetched: number;
     postsFetched: number;
   } | null;
+  coverage?: {
+    channelId: string;
+    telegramUsername: string;
+    timezone: string;
+    asOfDateUtc: string;
+    todayLocalDate: string;
+    postCoverage: {
+      totalPosts: number;
+      oldestPostPublishedAt: string | null;
+      newestPostPublishedAt: string | null;
+      oldestPostLocalDate: string | null;
+      newestPostLocalDate: string | null;
+      postHistoryDays: number;
+    };
+    observationCoverage: {
+      totalObservations: number;
+      oldestObservationAt: string | null;
+      newestObservationAt: string | null;
+      trackingStartDate: string | null;
+      latestObservationDate: string | null;
+      observedCalendarDays: string[];
+      observedDaysCount: number;
+      hasMetricObservations: boolean;
+    };
+    historicalCoverageDays: number;
+    rangeAvailability: Record<
+      RangePreset,
+      {
+        preset: RangePreset;
+        days: number;
+        isAvailable: boolean;
+        reason?: string;
+        requiredDays: number;
+        localFromDate: string;
+        localToDate: string;
+      }
+    >;
+    longestAvailablePreset: RangePreset | null;
+  } | null;
 }
 
 interface AnalyticsPayload {
@@ -93,7 +132,7 @@ export default function DashboardPage() {
 
   const [channels, setChannels] = useState<ChannelItem[]>([]);
   const [selectedChannelId, setSelectedChannelId] = useState<string>("");
-  const [selectedRange, setSelectedRange] = useState<RangePreset>("30d");
+  const [selectedRange, setSelectedRange] = useState<RangePreset>("7d");
 
   const [channelOverview, setChannelOverview] = useState<ChannelOverviewData | null>(null);
   const [analytics, setAnalytics] = useState<AnalyticsPayload | null>(null);
@@ -176,6 +215,17 @@ export default function DashboardPage() {
           setAnalytics(analyticsData);
           setIsLoading(false);
           setIsRefreshing(false);
+
+          // Graceful fallback: If current selectedRange is unavailable, select the longest available valid range
+          if (overviewData.coverage?.rangeAvailability) {
+            const currentAvail = overviewData.coverage.rangeAvailability[selectedRange]?.isAvailable;
+            if (!currentAvail && overviewData.coverage.longestAvailablePreset) {
+              const fallback = overviewData.coverage.longestAvailablePreset;
+              if (fallback !== selectedRange) {
+                setSelectedRange(fallback);
+              }
+            }
+          }
         }
       } catch (err: unknown) {
         if (!ignore) {
@@ -235,6 +285,7 @@ export default function DashboardPage() {
         onSelectChannel={setSelectedChannelId}
         selectedRange={selectedRange}
         onSelectRange={setSelectedRange}
+        rangeAvailability={channelOverview?.coverage?.rangeAvailability}
         onLogout={handleLogout}
         onRefresh={handleRefresh}
         isRefreshing={isRefreshing}
@@ -286,11 +337,29 @@ export default function DashboardPage() {
                   @{currentChannel.telegramUsername}
                 </span>
               </div>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-                Timezone: <span className="font-medium text-zinc-700 dark:text-zinc-300">{currentChannel.timezone}</span>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+                <span>
+                  Timezone: <span className="font-medium text-zinc-700 dark:text-zinc-300">{currentChannel.timezone}</span>
+                </span>
+                {channelOverview?.coverage?.observationCoverage?.trackingStartDate && (
+                  <span>
+                    • Tracking since:{" "}
+                    <span className="font-medium text-zinc-700 dark:text-zinc-300">
+                      {channelOverview.coverage.observationCoverage.trackingStartDate}
+                    </span>
+                  </span>
+                )}
+                {channelOverview?.coverage?.historicalCoverageDays !== undefined && (
+                  <span>
+                    • Coverage:{" "}
+                    <span className="font-medium text-zinc-700 dark:text-zinc-300">
+                      {channelOverview.coverage.historicalCoverageDays} days recorded
+                    </span>
+                  </span>
+                )}
                 {channelOverview?.latestSync?.finishedAt && (
-                  <span className="ml-3">
-                    Last synced:{" "}
+                  <span>
+                    • Last synced:{" "}
                     <span className="font-medium text-zinc-700 dark:text-zinc-300">
                       {new Date(channelOverview.latestSync.finishedAt).toLocaleString()}
                     </span>

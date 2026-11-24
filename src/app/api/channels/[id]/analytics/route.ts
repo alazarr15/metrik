@@ -3,10 +3,11 @@ import { validateApiAccess } from "@/server/auth/guard";
 import { prisma } from "@/server/db/client";
 import { findChannelByIdentifier } from "@/server/db/channel-queries";
 import { ApiValidationError, validateDateRange } from "@/server/metrics/validation";
-import { resolveExplicitPeriod } from "@/server/metrics/timezone";
+import { resolveExplicitPeriod, type PresetKey } from "@/server/metrics/timezone";
 import { calculatePostsPublished } from "@/server/metrics/posts-published";
 import { calculateLifetimeViews } from "@/server/metrics/lifetime-views";
 import { calculateObservedViewsGrowth } from "@/server/metrics/views-growth";
+import { getChannelCoverage } from "@/server/metrics/coverage";
 import { MetricType } from "@prisma/client";
 
 export async function GET(
@@ -114,6 +115,8 @@ export async function GET(
       period.localToDate
     );
 
+    const coverage = await getChannelCoverage(channel.id);
+
     return NextResponse.json({
       period: {
         from: period.fromUtc.toISOString(),
@@ -130,6 +133,21 @@ export async function GET(
         value: null,
         reason: "Reach is unavailable on Telegram broadcast channels",
       },
+      coverage: coverage
+        ? {
+            isRangeAvailable: rangeParam
+              ? coverage.rangeAvailability[rangeParam as PresetKey]?.isAvailable ?? true
+              : true,
+            reason: rangeParam
+              ? coverage.rangeAvailability[rangeParam as PresetKey]?.reason
+              : undefined,
+            historicalCoverageDays: coverage.historicalCoverageDays,
+            trackingStartDate: coverage.observationCoverage.trackingStartDate,
+            latestObservationDate: coverage.observationCoverage.latestObservationDate,
+            longestAvailablePreset: coverage.longestAvailablePreset,
+            rangeAvailability: coverage.rangeAvailability,
+          }
+        : null,
     });
   } catch (error) {
     if (error instanceof ApiValidationError) {

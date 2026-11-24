@@ -27,12 +27,18 @@ export interface ChannelItem {
 
 export type RangePreset = "1d" | "5d" | "7d" | "15d" | "30d" | "60d";
 
+export interface RangeAvailabilityItem {
+  isAvailable: boolean;
+  reason?: string;
+}
+
 interface NavigationProps {
   channels: ChannelItem[];
   selectedChannelId: string;
   onSelectChannel: (id: string) => void;
   selectedRange: RangePreset;
   onSelectRange: (range: RangePreset) => void;
+  rangeAvailability?: Partial<Record<RangePreset, RangeAvailabilityItem>>;
   onLogout: () => void;
   onRefresh?: () => void;
   isRefreshing?: boolean;
@@ -44,6 +50,7 @@ export function Navigation({
   onSelectChannel,
   selectedRange,
   onSelectRange,
+  rangeAvailability,
   onLogout,
   onRefresh,
   isRefreshing,
@@ -101,15 +108,23 @@ export function Navigation({
               </span>
               {(["1d", "5d", "7d", "15d", "30d", "60d"] as RangePreset[]).map((r) => {
                 const isActive = selectedRange === r;
+                const avail = rangeAvailability?.[r];
+                const isAvailable = avail ? avail.isAvailable : true;
+                const reason = avail?.reason;
+
                 return (
                   <button
                     key={r}
                     type="button"
-                    onClick={() => onSelectRange(r)}
-                    className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors cursor-pointer ${
+                    disabled={!isAvailable}
+                    onClick={() => isAvailable && onSelectRange(r)}
+                    title={!isAvailable ? reason : undefined}
+                    className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
                       isActive
-                        ? "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 shadow-xs"
-                        : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
+                        ? "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 shadow-xs cursor-default"
+                        : isAvailable
+                        ? "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 cursor-pointer"
+                        : "opacity-35 text-zinc-400 dark:text-zinc-600 cursor-not-allowed hover:text-zinc-400"
                     }`}
                   >
                     {r.toUpperCase()}
@@ -183,23 +198,36 @@ export function Navigation({
             <div>
               <label className="block text-xs font-medium text-zinc-500 mb-1.5">Date Range</label>
               <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
-                {(["1d", "5d", "7d", "15d", "30d", "60d"] as RangePreset[]).map((r) => (
-                  <button
-                    key={r}
-                    type="button"
-                    onClick={() => {
-                      onSelectRange(r);
-                      setMobileMenuOpen(false);
-                    }}
-                    className={`py-1.5 rounded-lg text-xs font-medium border text-center transition-colors ${
-                      selectedRange === r
-                        ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 border-transparent"
-                        : "border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400"
-                    }`}
-                  >
-                    {r.toUpperCase()}
-                  </button>
-                ))}
+                {(["1d", "5d", "7d", "15d", "30d", "60d"] as RangePreset[]).map((r) => {
+                  const isActive = selectedRange === r;
+                  const avail = rangeAvailability?.[r];
+                  const isAvailable = avail ? avail.isAvailable : true;
+                  const reason = avail?.reason;
+
+                  return (
+                    <button
+                      key={r}
+                      type="button"
+                      disabled={!isAvailable}
+                      onClick={() => {
+                        if (isAvailable) {
+                          onSelectRange(r);
+                          setMobileMenuOpen(false);
+                        }
+                      }}
+                      title={!isAvailable ? reason : undefined}
+                      className={`py-1.5 rounded-lg text-xs font-medium border text-center transition-colors ${
+                        isActive
+                          ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 border-transparent cursor-default"
+                          : isAvailable
+                          ? "border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 cursor-pointer"
+                          : "border-zinc-200/50 dark:border-zinc-800/50 opacity-35 text-zinc-400 dark:text-zinc-600 cursor-not-allowed"
+                      }`}
+                    >
+                      {r.toUpperCase()}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 

@@ -3,6 +3,7 @@ import { validateApiAccess } from "@/server/auth/guard";
 import { prisma } from "@/server/db/client";
 import { findChannelByIdentifier } from "@/server/db/channel-queries";
 import { ApiValidationError } from "@/server/metrics/validation";
+import { getChannelCoverage } from "@/server/metrics/coverage";
 
 export async function GET(
   request: Request,
@@ -29,8 +30,8 @@ export async function GET(
       );
     }
 
-    // Query channel summary statistics
-    const [publishedTotal, deletedTotal, oldestPost, newestPost, latestSync] =
+    // Query channel summary statistics and coverage
+    const [publishedTotal, deletedTotal, oldestPost, newestPost, latestSync, coverage] =
       await Promise.all([
         prisma.post.count({
           where: { channelId: channel.id, deletedAt: null },
@@ -52,6 +53,7 @@ export async function GET(
           where: { channelId: channel.id },
           orderBy: { startedAt: "desc" },
         }),
+        getChannelCoverage(channel.id),
       ]);
 
     return NextResponse.json({
@@ -84,6 +86,7 @@ export async function GET(
             postsFetched: latestSync.postsFetched,
           }
         : null,
+      coverage,
     });
   } catch (error) {
     if (error instanceof ApiValidationError) {

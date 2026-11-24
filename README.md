@@ -81,7 +81,8 @@ Metrik is a self-hosted, open-source analytics dashboard that collects and visua
 
 Metrik includes a responsive web dashboard for inspecting channel metrics:
 - **Authentication**: Access is guarded by `DASHBOARD_ADMIN_PASSWORD`. Browser clients authenticate at `/login` which establishes a signed, expiring `HttpOnly` session cookie (`SameSite=Strict`, `Path=/`).
-- **Channel Selector & Period Filtering**: Supports viewing any tracked Telegram channel with date range presets (`1D`, `5D`, `7D`, `15D`, `30D`, `60D`).
+- **Channel Selector & Period Filtering**: Supports viewing any tracked Telegram channel with data-availability-aware date range presets (`1D`, `5D`, `7D`, `15D`, `30D`, `60D`). Unavailable ranges are visibly disabled with clear tooltips, and the dashboard gracefully falls back to the longest available valid range.
+- **Coverage & Tracking Transparency**: Displays actual tracking start date and verified historical coverage days in the channel overview.
 - **Metrics & Precision Breakdown**: Visualizes Posts Published, Lifetime Views (exact sums vs. rounded estimates), and Reach (`UNAVAILABLE`).
 - **Observed Views Growth**: Displays verified non-negative view deltas between exact post observations, with complete coverage reporting and anomaly isolation.
 - **Posts Table & Audit Timeline**: Paginated post inspection with point-in-time observation history modals.
@@ -118,6 +119,16 @@ For complete API specifications, timezone semantics, and calculation algorithms,
   - Channel records, Post records, and SyncRun audit logs are never deleted during retention pruning.
 - **Initial 7-Day Collection Targeting**:
   - New channels can target posts from the most recent 7 calendar days (`pnpm sync:telegram <channel> --initial-7d`), stopping pagination early once posts older than the cutoff are reached.
+- **Data-Aware Analytics Availability & Rolling History Accumulation**:
+  - **Initial 7-Day Baseline**: For new channels, initial collection establishes a post dataset spanning the initial 7 calendar days (e.g. November 17–24, 2026).
+  - **Post-History vs. Metric-Observation Coverage**:
+    - *Post History*: Captures the channel's published posts by Telegram's `publishedAt` timestamp.
+    - *Metric Observations*: Captures point-in-time counter snapshots starting only when Metrik records its first sync.
+    - *Growth Reconstruction Boundary*: Telegram's public web preview only returns live counters at fetch time. Historical view counters for dates preceding Metrik's first observation do not exist and are never fabricated. A post's initial observation serves solely as its baseline.
+  - **Daily Accumulation & Filter Unlock**:
+    - As daily synchronizations run, the channel's historical coverage expands from 7 days up to the 60-day rolling retention boundary.
+    - Range filters become available strictly when verified historical coverage exists (`1D` $\ge 1$d, `5D` $\ge 5$d, `7D` $\ge 7$d, `15D` $\ge 15$d, `30D` $\ge 30$d, `60D` $\ge 60$d).
+    - Presets with insufficient history are disabled on both API and UI, returning clear reasons (e.g. *"Available after 15 days of recorded history."*).
 - **Discussion Group Limitations**:
   - Linked discussion groups and comment threads are **not accessible** via public web previews (Telegram redirects group preview requests to a join landing page).
   - Comment counters are captured when exposed on the channel post, but full group discussion analytics are outside the scope of public preview collection.

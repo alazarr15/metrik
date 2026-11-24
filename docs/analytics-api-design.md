@@ -382,6 +382,19 @@ Returns channel configuration, lifetime aggregate counters, and sync status.
     "finishedAt": "2026-11-23T16:14:52.482Z",
     "pagesFetched": 2,
     "postsFetched": 7
+  },
+  "coverage": {
+    "historicalCoverageDays": 8,
+    "todayLocalDate": "2026-11-24",
+    "longestAvailablePreset": "7d",
+    "rangeAvailability": {
+      "1d": { "preset": "1d", "days": 1, "isAvailable": true },
+      "5d": { "preset": "5d", "days": 5, "isAvailable": true },
+      "7d": { "preset": "7d", "days": 7, "isAvailable": true },
+      "15d": { "preset": "15d", "days": 15, "isAvailable": false, "reason": "Available after 15 days of recorded history." },
+      "30d": { "preset": "30d", "days": 30, "isAvailable": false, "reason": "Available after 30 days of recorded history." },
+      "60d": { "preset": "60d", "days": 60, "isAvailable": false, "reason": "Available after 60 days of recorded history." }
+    }
   }
 }
 ```
@@ -509,6 +522,11 @@ Computes time-bounded channel analytics, daily posts published, lifetime views b
     "status": "UNAVAILABLE",
     "value": null,
     "reason": "Reach is unavailable on Telegram broadcast channels"
+  },
+  "coverage": {
+    "isRangeAvailable": true,
+    "historicalCoverageDays": 8,
+    "longestAvailablePreset": "7d"
   }
 }
 ```

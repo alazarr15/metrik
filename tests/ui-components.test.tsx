@@ -5,6 +5,7 @@ import { PrecisionBadge, SyncStatusBadge } from "../src/components/ui/badge.tsx"
 import { MetricCard } from "../src/components/ui/metric-card.tsx";
 import { DailyPostsChart } from "../src/components/charts/daily-posts-chart.tsx";
 import { ObservedGrowthChart } from "../src/components/charts/observed-growth-chart.tsx";
+import { Navigation } from "../src/components/ui/navigation.tsx";
 
 describe("Dashboard UI Component Rendering", () => {
   describe("PrecisionBadge", () => {
@@ -167,6 +168,50 @@ describe("Dashboard UI Component Rendering", () => {
       );
 
       expect(html).toContain("Unavailable");
+    });
+  });
+
+  describe("Navigation Range Presets Availability", () => {
+    it("renders available presets enabled and unavailable presets disabled with tooltip", () => {
+      const channels = [
+        {
+          id: "ch-1",
+          telegramUsername: "testchannel",
+          title: "Test Channel",
+          timezone: "Africa/Addis_Ababa",
+          postsCount: 10,
+        },
+      ];
+
+      const rangeAvailability = {
+        "1d": { isAvailable: true },
+        "5d": { isAvailable: true },
+        "7d": { isAvailable: true },
+        "15d": { isAvailable: false, reason: "Available after 15 days of recorded history." },
+        "30d": { isAvailable: false, reason: "Available after 30 days of recorded history." },
+        "60d": { isAvailable: false, reason: "Available after 60 days of recorded history." },
+      };
+
+      const html = renderToStaticMarkup(
+        <Navigation
+          channels={channels}
+          selectedChannelId="ch-1"
+          onSelectChannel={() => {}}
+          selectedRange="7d"
+          onSelectRange={() => {}}
+          rangeAvailability={rangeAvailability}
+          onLogout={() => {}}
+        />
+      );
+
+      // 7D is active
+      expect(html).toContain("7D");
+      // 15D, 30D, 60D have title reason tooltips and disabled attribute
+      expect(html).toContain('title="Available after 15 days of recorded history."');
+      expect(html).toContain('title="Available after 30 days of recorded history."');
+      expect(html).toContain('title="Available after 60 days of recorded history."');
+      expect(html).toContain("disabled");
+      expect(html).toContain("cursor-not-allowed");
     });
   });
 });
