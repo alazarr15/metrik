@@ -93,7 +93,16 @@ export function getCalendarDaysBetween(startLocalDate: string, endLocalDate: str
   return dates;
 }
 
-export type PresetKey = "7d" | "30d" | "90d";
+export type PresetKey = "1d" | "5d" | "7d" | "15d" | "30d" | "60d";
+
+export const PRESET_DAYS_MAP: Record<PresetKey, number> = {
+  "1d": 1,
+  "5d": 5,
+  "7d": 7,
+  "15d": 15,
+  "30d": 30,
+  "60d": 60,
+};
 
 export interface ResolvedPeriod {
   fromUtc: Date;
@@ -104,10 +113,15 @@ export interface ResolvedPeriod {
 }
 
 /**
- * Resolves a preset range ("7d", "30d", "90d") relative to a reference UTC instant in the channel's timezone.
- * "7d" covers today and the preceding 6 calendar days.
- * "30d" covers today and the preceding 29 calendar days.
- * "90d" covers today and the preceding 89 calendar days.
+ * Resolves a preset range ("1d", "5d", "7d", "15d", "30d", "60d")
+ * relative to a reference UTC instant in the channel's timezone.
+ *
+ * "1d": covers today (1 calendar day).
+ * "5d": covers today and the preceding 4 calendar days (5 calendar days).
+ * "7d": covers today and the preceding 6 calendar days (7 calendar days).
+ * "15d": covers today and the preceding 14 calendar days (15 calendar days).
+ * "30d": covers today and the preceding 29 calendar days (30 calendar days).
+ * "60d": covers today and the preceding 59 calendar days (60 calendar days).
  *
  * Interval: [fromUtc, toUtc) where toUtc is next local midnight (00:00:00 of tomorrow).
  */
@@ -118,7 +132,7 @@ export function resolvePresetRange(
 ): ResolvedPeriod {
   const localToday = formatLocalDate(referenceDateUtc, timezone);
 
-  const daysCount = preset === "7d" ? 7 : preset === "30d" ? 30 : 90;
+  const daysCount = PRESET_DAYS_MAP[preset] ?? 30;
 
   // Compute start date: localToday - (daysCount - 1) days
   const todayDateObj = new Date(`${localToday}T00:00:00Z`);

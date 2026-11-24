@@ -48,6 +48,22 @@ describe("Timezone & Calendar Boundary Utilities", () => {
     // Noon on 2026-11-23 UTC (15:00 on 2026-11-23 in Addis Ababa)
     const ref = new Date("2026-11-23T12:00:00.000Z");
 
+    it("resolves 1d preset to today only", () => {
+      const res = resolvePresetRange("1d", ref, TIMEZONE);
+      expect(res.localToDate).toBe("2026-11-23");
+      expect(res.localFromDate).toBe("2026-11-23");
+      expect(res.fromUtc.toISOString()).toBe("2026-11-22T21:00:00.000Z");
+      expect(res.toUtc.toISOString()).toBe("2026-11-23T21:00:00.000Z");
+    });
+
+    it("resolves 5d preset to today and preceding 4 calendar days", () => {
+      const res = resolvePresetRange("5d", ref, TIMEZONE);
+      expect(res.localToDate).toBe("2026-11-23");
+      expect(res.localFromDate).toBe("2026-11-19"); // 23 - 4 = 19
+      expect(res.fromUtc.toISOString()).toBe("2026-11-18T21:00:00.000Z");
+      expect(res.toUtc.toISOString()).toBe("2026-11-23T21:00:00.000Z");
+    });
+
     it("resolves 7d preset to today and preceding 6 calendar days", () => {
       const res = resolvePresetRange("7d", ref, TIMEZONE);
       expect(res.localToDate).toBe("2026-11-23");
@@ -59,6 +75,14 @@ describe("Timezone & Calendar Boundary Utilities", () => {
       expect(res.toUtc.toISOString()).toBe("2026-11-23T21:00:00.000Z");
     });
 
+    it("resolves 15d preset to today and preceding 14 calendar days", () => {
+      const res = resolvePresetRange("15d", ref, TIMEZONE);
+      expect(res.localToDate).toBe("2026-11-23");
+      expect(res.localFromDate).toBe("2026-11-09"); // 23 - 14 = 9
+      expect(res.fromUtc.toISOString()).toBe("2026-11-08T21:00:00.000Z");
+      expect(res.toUtc.toISOString()).toBe("2026-11-23T21:00:00.000Z");
+    });
+
     it("resolves 30d preset to today and preceding 29 calendar days", () => {
       const res = resolvePresetRange("30d", ref, TIMEZONE);
       expect(res.localToDate).toBe("2026-11-23");
@@ -66,10 +90,10 @@ describe("Timezone & Calendar Boundary Utilities", () => {
       expect(res.toUtc.toISOString()).toBe("2026-11-23T21:00:00.000Z");
     });
 
-    it("resolves 90d preset to today and preceding 89 calendar days", () => {
-      const res = resolvePresetRange("90d", ref, TIMEZONE);
+    it("resolves 60d preset to today and preceding 59 calendar days", () => {
+      const res = resolvePresetRange("60d", ref, TIMEZONE);
       expect(res.localToDate).toBe("2026-11-23");
-      expect(res.localFromDate).toBe("2026-08-26"); // 90 calendar days
+      expect(res.localFromDate).toBe("2026-09-25"); // 60 calendar days (Oct has 31 days)
       expect(res.toUtc.toISOString()).toBe("2026-11-23T21:00:00.000Z");
     });
   });

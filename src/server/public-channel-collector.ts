@@ -288,11 +288,13 @@ export async function fetchPublicChannelPosts(
   options?: {
     maxPages?: number;
     customFetch?: typeof fetch;
+    stopBeforeDate?: Date;
   }
 ): Promise<BoundedFetchResult> {
   const cleanUsername = validateChannelUsername(username);
   const maxPages = Math.min(Math.max(options?.maxPages ?? 1, 1), 10);
   const customFetch = options?.customFetch ?? fetch;
+  const stopBeforeMs = options?.stopBeforeDate ? options.stopBeforeDate.getTime() : null;
 
   let currentBeforeId: number | undefined;
   let pagesFetched = 0;
@@ -315,6 +317,14 @@ export async function fetchPublicChannelPosts(
     hasMore = page.hasMore;
     if (!page.hasMore || page.beforeId === null) {
       break;
+    }
+
+    // If stopBeforeDate is set and the oldest post in the page is already at or before stopBeforeDate, stop fetching
+    if (stopBeforeMs !== null && page.posts.length > 0) {
+      const oldestInPage = page.posts[page.posts.length - 1];
+      if (oldestInPage.publishedTimestamp <= stopBeforeMs) {
+        break;
+      }
     }
 
     // Stop if beforeId did not decrease

@@ -96,16 +96,19 @@ Every API route strictly validates all incoming query and path parameters before
 - **Ordering**: `from` must strictly precede `to` (`from < to`). If `from >= to`, returns `400 Bad Request` (`INVALID_DATE_RANGE`, `"from timestamp must precede to timestamp"`).
 - **Maximum Span**: The span between `from` and `to` cannot exceed 365 calendar days to prevent denial-of-service / memory exhaustion (`400 Bad Request`, `RANGE_EXCEEDS_MAXIMUM`).
 - **Preset Definitions (`range`)**:
-  - Allowed values: `"7d"`, `"30d"`, `"90d"`.
+  - Allowed values: `"1d"`, `"5d"`, `"7d"`, `"15d"`, `"30d"`, `"60d"`.
   - Defined as full calendar-day ranges in the channel's configured timezone (`Africa/Addis_Ababa`).
   - **Calendar Day Coverage**:
+    - `"1d"`: Covers today (1 full calendar day total: $[D_{\text{today}}, D_{\text{today}}]$).
+    - `"5d"`: Covers today and the preceding 4 calendar days (5 full calendar days total: $[D_{\text{today}} - 4, D_{\text{today}}]$).
     - `"7d"`: Covers today and the preceding 6 calendar days (7 full calendar days total: $[D_{\text{today}} - 6, D_{\text{today}}]$).
+    - `"15d"`: Covers today and the preceding 14 calendar days (15 full calendar days total: $[D_{\text{today}} - 14, D_{\text{today}}]$).
     - `"30d"`: Covers today and the preceding 29 calendar days (30 full calendar days total: $[D_{\text{today}} - 29, D_{\text{today}}]$).
-    - `"90d"`: Covers today and the preceding 89 calendar days (90 full calendar days total: $[D_{\text{today}} - 89, D_{\text{today}}]$).
+    - `"60d"`: Covers today and the preceding 59 calendar days (60 full calendar days total: $[D_{\text{today}} - 59, D_{\text{today}}]$).
   - **Boundary Calculation**:
     - Interval is $[t_{\text{from}}, t_{\text{to}})$ (inclusive start, exclusive end).
     - $t_{\text{to}}$: The next local midnight `00:00:00` of tomorrow ($D_{\text{today}} + 1$), converted to UTC.
-    - $t_{\text{from}}$: Local midnight `00:00:00` of the start calendar day ($D_{\text{today}} - 6$, $D_{\text{today}} - 29$, or $D_{\text{today}} - 89$), converted to UTC.
+    - $t_{\text{from}}$: Local midnight `00:00:00` of the start calendar day ($D_{\text{today}} - (N - 1)$), converted to UTC.
     - **Daylight-Saving-Aware Conversion**: Conversions between local calendar midnight strings and UTC instants dynamically resolve the exact IANA wall-clock offset for $t_{\text{from}}$ and $t_{\text{to}}$ independently, ensuring full DST transition resilience if channels in other timezones are configured.
 - **Mutual Exclusivity**: Supplying both `range` and explicit `from`/`to` returns `400 Bad Request` (`AMBIGUOUS_RANGE_PARAMETERS`).
 
@@ -450,7 +453,7 @@ Computes time-bounded channel analytics, daily posts published, lifetime views b
 - `id` (path): Channel ID or username.
 - `from` (query, optional): ISO 8601 UTC timestamp (inclusive start).
 - `to` (query, optional): ISO 8601 UTC timestamp (exclusive end).
-- `range` (query, optional): Preset shortcut (`7d`, `30d`, `90d`). Mutually exclusive with `from`/`to`.
+- `range` (query, optional): Preset shortcut (`1d`, `5d`, `7d`, `15d`, `30d`, `60d`). Mutually exclusive with `from`/`to`.
 
 #### Response (200 OK)
 ```json

@@ -183,6 +183,35 @@ describe("Phase 4 Read-Only API Route Handlers", () => {
       expect(json.error.code).toBe("INVALID_RANGE_PRESET");
     });
 
+    it("rejects discontinued 90d preset with 400 INVALID_RANGE_PRESET", async () => {
+      const req = new Request(
+        "http://localhost:3000/api/channels/mogesmotor/analytics?range=90d",
+        { headers: authHeaders }
+      );
+      const res = await getChannelAnalytics(req, {
+        params: Promise.resolve({ id: "mogesmotor" }),
+      });
+      expect(res.status).toBe(400);
+
+      const json = await res.json();
+      expect(json.error.code).toBe("INVALID_RANGE_PRESET");
+    });
+
+    it("returns analytics report for 60d rolling retention window", async () => {
+      const req = new Request(
+        "http://localhost:3000/api/channels/mogesmotor/analytics?range=60d",
+        { headers: authHeaders }
+      );
+      const res = await getChannelAnalytics(req, {
+        params: Promise.resolve({ id: "mogesmotor" }),
+      });
+      expect(res.status).toBe(200);
+
+      const data = await res.json();
+      expect(data).toHaveProperty("period");
+      expect(data.postsPublished.daily.length).toBe(60);
+    });
+
     it("returns analytics report adhering to specification", async () => {
       const req = new Request(
         "http://localhost:3000/api/channels/mogesmotor/analytics?range=30d",

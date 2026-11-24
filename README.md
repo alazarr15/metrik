@@ -70,7 +70,8 @@ Metrik is a self-hosted, open-source analytics dashboard that collects and visua
 | `pnpm test` | Runs unit tests (Vitest) |
 | `pnpm test:watch` | Runs Vitest in watch mode |
 | `pnpm collect:public` | Executes the public channel preview collector spike |
-| `pnpm sync:telegram` | Synchronizes channel posts and metrics into PostgreSQL (`pnpm sync:telegram [channel] [pages]`, default: 2 pages) |
+| `pnpm sync:telegram` | Synchronizes channel posts and metrics into PostgreSQL (`pnpm sync:telegram [channel] [pages]`, default: 2 pages, supports `--initial-7d`) |
+| `pnpm retention:prune` | Prunes redundant historical observations older than 60 days while preserving baseline anchors (`pnpm retention:prune [channel] [days]`) |
 | `pnpm prisma generate` | Generates the Prisma Client |
 | `pnpm prisma migrate dev` | Applies pending database migrations in development |
 
@@ -80,7 +81,7 @@ Metrik is a self-hosted, open-source analytics dashboard that collects and visua
 
 Metrik includes a responsive web dashboard for inspecting channel metrics:
 - **Authentication**: Access is guarded by `DASHBOARD_ADMIN_PASSWORD`. Browser clients authenticate at `/login` which establishes a signed, expiring `HttpOnly` session cookie (`SameSite=Strict`, `Path=/`).
-- **Channel Selector & Period Filtering**: Supports viewing any tracked Telegram channel with date range presets (`7d`, `30d`, `90d`).
+- **Channel Selector & Period Filtering**: Supports viewing any tracked Telegram channel with date range presets (`1D`, `5D`, `7D`, `15D`, `30D`, `60D`).
 - **Metrics & Precision Breakdown**: Visualizes Posts Published, Lifetime Views (exact sums vs. rounded estimates), and Reach (`UNAVAILABLE`).
 - **Observed Views Growth**: Displays verified non-negative view deltas between exact post observations, with complete coverage reporting and anomaly isolation.
 - **Posts Table & Audit Timeline**: Paginated post inspection with point-in-time observation history modals.
@@ -111,6 +112,12 @@ For complete API specifications, timezone semantics, and calculation algorithms,
   - Telegram public web previews display exact integer counts for values $< 1,000$ (e.g. `98`, `450`), but format values $\ge 1,000$ with metric suffixes (e.g. `1.2K`, `1.74M`).
   - Metrik records raw displayed strings alongside parsed numeric values and explicitly tags precision as `exact`, `rounded`, or `unavailable`.
   - Exact view deltas are strictly calculated only between observations with `exact` precision to prevent false delta reporting.
+- **Rolling 60-Day Retention & Baseline Anchor Preservation**:
+  - Raw metric observations are retained across a rolling 60-calendar-day window in the channel's configured timezone.
+  - For observations preceding the 60-day boundary, Metrik preserves the single latest observation per post & metric type as the historical baseline anchor. Only redundant observations strictly older than this anchor are pruned.
+  - Channel records, Post records, and SyncRun audit logs are never deleted during retention pruning.
+- **Initial 7-Day Collection Targeting**:
+  - New channels can target posts from the most recent 7 calendar days (`pnpm sync:telegram <channel> --initial-7d`), stopping pagination early once posts older than the cutoff are reached.
 - **Discussion Group Limitations**:
   - Linked discussion groups and comment threads are **not accessible** via public web previews (Telegram redirects group preview requests to a join landing page).
   - Comment counters are captured when exposed on the channel post, but full group discussion analytics are outside the scope of public preview collection.

@@ -323,7 +323,7 @@ export default function DashboardPage() {
               value={analytics.postsPublished.total}
               subtitle={`Total lifetime active: ${channelOverview.summary.postsPublishedTotal}`}
               icon={<BarChart3Icon className="w-4 h-4" />}
-              badgeText={`Last ${selectedRange}`}
+              badgeText={`Last ${selectedRange.toUpperCase()}`}
             />
 
             {/* Metric 2: Lifetime Views */}

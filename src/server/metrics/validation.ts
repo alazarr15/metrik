@@ -131,10 +131,11 @@ export function validateDateRange(
   // Handle Preset range
   if (hasRange) {
     const rangeVal = rangeParam!.trim().toLowerCase();
-    if (rangeVal !== "7d" && rangeVal !== "30d" && rangeVal !== "90d") {
+    const validPresets: RangePreset[] = ["1d", "5d", "7d", "15d", "30d", "60d"];
+    if (!validPresets.includes(rangeVal as RangePreset)) {
       throw new ApiValidationError(
         "INVALID_RANGE_PRESET",
-        `Invalid range preset: "${rangeParam}". Allowed presets are "7d", "30d", or "90d".`
+        `Invalid range preset: "${rangeParam}". Allowed presets are "1d", "5d", "7d", "15d", "30d", or "60d".`
       );
     }
     const resolved: ResolvedPeriod = resolvePresetRange(

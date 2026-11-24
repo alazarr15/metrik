@@ -25,7 +25,7 @@ export interface ChannelItem {
   } | null;
 }
 
-export type RangePreset = "7d" | "30d" | "90d";
+export type RangePreset = "1d" | "5d" | "7d" | "15d" | "30d" | "60d";
 
 interface NavigationProps {
   channels: ChannelItem[];
@@ -94,19 +94,19 @@ export function Navigation({
 
           {/* Right: Date Preset, Refresh, and Logout */}
           <div className="hidden md:flex items-center gap-3">
-            {/* Range Presets (7d, 30d, 90d) */}
+            {/* Range Presets (1D, 5D, 7D, 15D, 30D, 60D) */}
             <div className="flex items-center p-0.5 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-800/80">
               <span className="flex items-center gap-1 px-2 text-zinc-400 text-xs">
                 <CalendarIcon className="w-3.5 h-3.5" />
               </span>
-              {(["7d", "30d", "90d"] as RangePreset[]).map((r) => {
+              {(["1d", "5d", "7d", "15d", "30d", "60d"] as RangePreset[]).map((r) => {
                 const isActive = selectedRange === r;
                 return (
                   <button
                     key={r}
                     type="button"
                     onClick={() => onSelectRange(r)}
-                    className={`px-3 py-1 rounded-md text-xs font-medium transition-colors cursor-pointer ${
+                    className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors cursor-pointer ${
                       isActive
                         ? "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 shadow-xs"
                         : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
@@ -182,8 +182,8 @@ export function Navigation({
 
             <div>
               <label className="block text-xs font-medium text-zinc-500 mb-1.5">Date Range</label>
-              <div className="grid grid-cols-3 gap-2">
-                {(["7d", "30d", "90d"] as RangePreset[]).map((r) => (
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
+                {(["1d", "5d", "7d", "15d", "30d", "60d"] as RangePreset[]).map((r) => (
                   <button
                     key={r}
                     type="button"

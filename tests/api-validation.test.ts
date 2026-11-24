@@ -113,20 +113,32 @@ describe("API Parameter Validation", () => {
       expect(res.fromUtc.getTime()).toBeLessThan(res.toUtc.getTime());
     });
 
-    it("accepts valid presets: 7d, 30d, 90d", () => {
+    it("accepts valid presets: 1d, 5d, 7d, 15d, 30d, 60d", () => {
+      const res1 = validateDateRange(null, null, "1d", "Africa/Addis_Ababa", fixedReference);
+      expect(res1.preset).toBe("1d");
+
+      const res5 = validateDateRange(null, null, "5d", "Africa/Addis_Ababa", fixedReference);
+      expect(res5.preset).toBe("5d");
+
       const res7 = validateDateRange(null, null, "7d", "Africa/Addis_Ababa", fixedReference);
       expect(res7.preset).toBe("7d");
+
+      const res15 = validateDateRange(null, null, "15d", "Africa/Addis_Ababa", fixedReference);
+      expect(res15.preset).toBe("15d");
 
       const res30 = validateDateRange(null, null, "30d", "Africa/Addis_Ababa", fixedReference);
       expect(res30.preset).toBe("30d");
 
-      const res90 = validateDateRange(null, null, "90d", "Africa/Addis_Ababa", fixedReference);
-      expect(res90.preset).toBe("90d");
+      const res60 = validateDateRange(null, null, "60d", "Africa/Addis_Ababa", fixedReference);
+      expect(res60.preset).toBe("60d");
     });
 
-    it("rejects invalid presets", () => {
+    it("rejects invalid presets (e.g. 14d, 90d, 1y)", () => {
       expect(() =>
         validateDateRange(null, null, "14d", "Africa/Addis_Ababa", fixedReference)
+      ).toThrow(ApiValidationError);
+      expect(() =>
+        validateDateRange(null, null, "90d", "Africa/Addis_Ababa", fixedReference)
       ).toThrow(ApiValidationError);
       expect(() =>
         validateDateRange(null, null, "1y", "Africa/Addis_Ababa", fixedReference)

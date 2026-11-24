@@ -11,7 +11,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "collect:public": "node --env-file-if-exists=.env scripts/public-collector-spike.ts",
-    "sync:telegram": "node --env-file-if-exists=.env scripts/sync-channel.ts"
+    "sync:telegram": "node --env-file-if-exists=.env scripts/sync-channel.ts",
+    "retention:prune": "node --env-file-if-exists=.env scripts/prune-retention.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.4.1",

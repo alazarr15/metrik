@@ -31,18 +31,35 @@ async function main() {
     console.error("==========================================");
     console.error(err instanceof Error ? err.message : String(err));
     console.error(`Page count must be a positive integer between 1 and ${MAX_ALLOWED_SYNC_PAGES} (default: ${DEFAULT_SYNC_MAX_PAGES}).`);
-    console.error("Usage: pnpm sync:telegram [channel_username] [max_pages]");
+    console.error("Usage: pnpm sync:telegram [channel_username] [max_pages] [--initial-7d]");
     console.error("Example: pnpm sync:telegram mogesmotor 2");
     console.error("==========================================\n");
     process.exit(1);
   }
 
+  // Check for targetDays flag (e.g. --initial-7d or --days=7)
+  let targetDays: number | undefined;
+  for (const arg of process.argv.slice(2)) {
+    if (arg === "--initial-7d") {
+      targetDays = 7;
+    } else if (arg.startsWith("--days=")) {
+      const parsed = parseInt(arg.slice(7), 10);
+      if (!Number.isNaN(parsed) && parsed > 0) {
+        targetDays = parsed;
+      }
+    }
+  }
+
   console.log(`Starting synchronization for public channel: @${targetChannel.replace(/^@/, "")}`);
-  console.log(`Pagination limit: ${maxPages} page(s)\n`);
+  console.log(`Pagination limit: ${maxPages} page(s)`);
+  if (targetDays) {
+    console.log(`Target window   : initial ${targetDays} calendar days`);
+  }
+  console.log("");
 
   const startTime = Date.now();
   try {
-    const result = await syncPublicChannel(targetChannel, { maxPages });
+    const result = await syncPublicChannel(targetChannel, { maxPages, targetDays });
     const elapsedSec = ((Date.now() - startTime) / 1000).toFixed(2);
 
     console.log("==========================================");
