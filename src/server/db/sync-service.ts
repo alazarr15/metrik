@@ -264,7 +264,7 @@ export async function syncPublicChannel(
       }
     }
 
-    // 6. Finalize SyncRun with SUCCESS
+    // 6. Finalize SyncRun with SUCCESS and update channel lastSyncedAt
     await db.syncRun.update({
       where: { id: syncRun.id },
       data: {
@@ -273,6 +273,13 @@ export async function syncPublicChannel(
         pagesFetched: fetchResult.pagesFetched,
         postsFetched: fetchResult.posts.length,
         errorMessage: null,
+      },
+    });
+
+    await db.channel.update({
+      where: { id: channel.id },
+      data: {
+        lastSyncedAt: new Date(),
       },
     });
 

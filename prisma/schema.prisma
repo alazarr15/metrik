@@ -28,13 +28,25 @@ enum SyncStatus {
   FAILED
 }
 
+enum BootstrapStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  INCOMPLETE
+  FAILED
+}
+
 model Channel {
-  id               String       @id @default(cuid())
-  telegramUsername String       @unique
+  id               String          @id @default(cuid())
+  telegramUsername String          @unique
   title            String?
-  timezone         String       @default("Africa/Addis_Ababa")
-  createdAt        DateTime     @default(now())
-  updatedAt        DateTime     @updatedAt
+  timezone         String          @default("Africa/Addis_Ababa")
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  bootstrapStatus  BootstrapStatus @default(PENDING)
+  lastSyncedAt     DateTime?
+  nextPollAt       DateTime?
 
   posts            Post[]
   syncRuns         SyncRun[]
@@ -91,4 +103,14 @@ model SyncRun {
 
   @@index([channelId, startedAt])
   @@map("sync_runs")
+}
+
+model WorkerHeartbeat {
+  id              String   @id @default("singleton")
+  workerId        String
+  lastHeartbeatAt DateTime @default(now())
+  pollIntervalMin Int      @default(30)
+  status          String   @default("RUNNING") // RUNNING, STOPPED
+
+  @@map("worker_heartbeats")
 }

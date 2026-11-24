@@ -330,6 +330,9 @@ Returns all tracked Telegram channels in the local database.
       "timezone": "Africa/Addis_Ababa",
       "createdAt": "2026-11-23T15:52:03.490Z",
       "updatedAt": "2026-11-23T15:52:03.490Z",
+      "bootstrapStatus": "COMPLETED",
+      "lastSyncedAt": "2026-11-24T10:34:00.000Z",
+      "nextPollAt": "2026-11-24T11:04:00.000Z",
       "postsCount": 7,
       "latestSync": {
         "id": "cmwtgv54o00025v30plgw27xi",
@@ -362,7 +365,19 @@ Returns channel configuration, lifetime aggregate counters, and sync status.
     "title": "Moges Motors™️",
     "timezone": "Africa/Addis_Ababa",
     "createdAt": "2026-11-23T15:52:03.490Z",
-    "updatedAt": "2026-11-23T15:52:03.490Z"
+    "updatedAt": "2026-11-23T15:52:03.490Z",
+    "bootstrapStatus": "COMPLETED",
+    "lastSyncedAt": "2026-11-24T10:34:00.000Z",
+    "nextPollAt": "2026-11-24T11:04:00.000Z"
+  },
+  "tracking": {
+    "status": "ACTIVE",
+    "bootstrapStatus": "COMPLETED",
+    "isWorkerActive": true,
+    "pollIntervalMinutes": 30,
+    "lastSyncedAt": "2026-11-24T10:34:00.000Z",
+    "nextPollAt": "2026-11-24T11:04:00.000Z",
+    "workerLastHeartbeatAt": "2026-11-24T10:34:00.000Z"
   },
   "summary": {
     "postsPublishedTotal": 7,

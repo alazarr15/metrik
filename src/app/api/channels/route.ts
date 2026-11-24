@@ -35,6 +35,9 @@ export async function GET(request: Request) {
         timezone: c.timezone,
         createdAt: c.createdAt.toISOString(),
         updatedAt: c.updatedAt.toISOString(),
+        bootstrapStatus: c.bootstrapStatus,
+        lastSyncedAt: c.lastSyncedAt ? c.lastSyncedAt.toISOString() : null,
+        nextPollAt: c.nextPollAt ? c.nextPollAt.toISOString() : null,
         postsCount: c._count.posts,
         latestSync: latestSync
           ? {

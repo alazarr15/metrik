@@ -17,6 +17,11 @@ import {
   ClockIcon,
   AlertCircleIcon,
 } from "@/components/ui/icons";
+import {
+  TrackingStatusBadge,
+  BootstrapStatusBadge,
+  SyncStatusBadge,
+} from "@/components/ui/badge";
 
 interface ChannelOverviewData {
   channel: {
@@ -26,6 +31,9 @@ interface ChannelOverviewData {
     timezone: string;
     createdAt: string;
     updatedAt: string;
+    bootstrapStatus?: "PENDING" | "RUNNING" | "COMPLETED" | "INCOMPLETE" | "FAILED";
+    lastSyncedAt?: string | null;
+    nextPollAt?: string | null;
   };
   summary: {
     postsPublishedTotal: number;
@@ -45,7 +53,17 @@ interface ChannelOverviewData {
     finishedAt: string | null;
     pagesFetched: number;
     postsFetched: number;
+    errorMessage?: string | null;
   } | null;
+  tracking?: {
+    status: "ACTIVE" | "STOPPED";
+    bootstrapStatus: "PENDING" | "RUNNING" | "COMPLETED" | "INCOMPLETE" | "FAILED";
+    isWorkerActive: boolean;
+    pollIntervalMinutes: number;
+    lastSyncedAt: string | null;
+    nextPollAt: string | null;
+    workerLastHeartbeatAt: string | null;
+  };
   coverage?: {
     channelId: string;
     telegramUsername: string;
@@ -140,6 +158,7 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true);
 
   // Initial fetch for channels
   useEffect(() => {
@@ -244,6 +263,40 @@ export default function DashboardPage() {
     };
   }, [selectedChannelId, selectedRange, router]);
 
+  // Periodic background auto-refresh every 30 seconds
+  useEffect(() => {
+    if (!selectedChannelId || !autoRefreshEnabled) return;
+
+    const intervalId = setInterval(async () => {
+      try {
+        const [overviewRes, analyticsRes] = await Promise.all([
+          fetch(`/api/channels/${encodeURIComponent(selectedChannelId)}`),
+          fetch(
+            `/api/channels/${encodeURIComponent(selectedChannelId)}/analytics?range=${selectedRange}`
+          ),
+        ]);
+
+        if (overviewRes.status === 401 || analyticsRes.status === 401) {
+          router.replace("/login");
+          return;
+        }
+
+        if (overviewRes.ok && analyticsRes.ok) {
+          const overviewData = await overviewRes.json();
+          const analyticsData = await analyticsRes.json();
+          setChannelOverview(overviewData);
+          setAnalytics(analyticsData);
+        }
+      } catch {
+        // Silently ignore background polling errors to avoid interrupting user
+      }
+    }, 30_000);
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [selectedChannelId, selectedRange, autoRefreshEnabled, router]);
+
   async function handleLogout() {
     try {
       await fetch("/api/auth/logout", { method: "POST" });
@@ -327,59 +380,116 @@ export default function DashboardPage() {
 
         {/* Channel Details Header */}
         {currentChannel && (
-          <div className="flex flex-wrap items-baseline justify-between gap-4 pb-2 border-b border-zinc-200 dark:border-zinc-800">
-            <div>
-              <div className="flex items-center gap-2">
+          <div className="flex flex-col gap-3 pb-4 border-b border-zinc-200 dark:border-zinc-800">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex flex-wrap items-center gap-3">
                 <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
                   {currentChannel.title || currentChannel.telegramUsername}
                 </h1>
                 <span className="text-sm text-zinc-500 dark:text-zinc-400 font-mono">
                   @{currentChannel.telegramUsername}
                 </span>
+
+                {/* Tracking & Bootstrap Status Badges */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <TrackingStatusBadge
+                    isWorkerActive={channelOverview?.tracking?.isWorkerActive ?? false}
+                    pollIntervalMinutes={channelOverview?.tracking?.pollIntervalMinutes ?? 30}
+                  />
+                  <BootstrapStatusBadge
+                    status={channelOverview?.tracking?.bootstrapStatus || "PENDING"}
+                  />
+                  {channelOverview?.latestSync && (
+                    <SyncStatusBadge status={channelOverview.latestSync.status} />
+                  )}
+                </div>
               </div>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
-                <span>
-                  Timezone: <span className="font-medium text-zinc-700 dark:text-zinc-300">{currentChannel.timezone}</span>
-                </span>
-                {channelOverview?.coverage?.observationCoverage?.trackingStartDate && (
-                  <span>
-                    • Tracking since:{" "}
-                    <span className="font-medium text-zinc-700 dark:text-zinc-300">
-                      {channelOverview.coverage.observationCoverage.trackingStartDate}
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setAutoRefreshEnabled((prev) => !prev)}
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${
+                    autoRefreshEnabled
+                      ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
+                      : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700"
+                  }`}
+                  title="Toggle 30-second background polling auto-refresh"
+                >
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full ${
+                      autoRefreshEnabled ? "bg-emerald-500 animate-pulse" : "bg-zinc-400"
+                    }`}
+                  />
+                  Auto-refresh: {autoRefreshEnabled ? "30s" : "off"}
+                </button>
+
+                {analytics && (
+                  <div className="text-xs text-zinc-500 dark:text-zinc-400 bg-white dark:bg-zinc-900 px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-800 shadow-2xs">
+                    Period:{" "}
+                    <span className="font-semibold text-zinc-800 dark:text-zinc-200">
+                      {analytics.period.localFromDate}
+                    </span>{" "}
+                    to{" "}
+                    <span className="font-semibold text-zinc-800 dark:text-zinc-200">
+                      {analytics.period.localToDate}
                     </span>
-                  </span>
+                  </div>
                 )}
-                {channelOverview?.coverage?.historicalCoverageDays !== undefined && (
-                  <span>
-                    • Coverage:{" "}
-                    <span className="font-medium text-zinc-700 dark:text-zinc-300">
-                      {channelOverview.coverage.historicalCoverageDays} days recorded
-                    </span>
-                  </span>
-                )}
-                {channelOverview?.latestSync?.finishedAt && (
-                  <span>
-                    • Last synced:{" "}
-                    <span className="font-medium text-zinc-700 dark:text-zinc-300">
-                      {new Date(channelOverview.latestSync.finishedAt).toLocaleString()}
-                    </span>
-                  </span>
-                )}
-              </p>
+              </div>
             </div>
 
-            {analytics && (
-              <div className="text-xs text-zinc-500 dark:text-zinc-400 bg-white dark:bg-zinc-900 px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-800 shadow-2xs">
-                Period:{" "}
-                <span className="font-semibold text-zinc-800 dark:text-zinc-200">
-                  {analytics.period.localFromDate}
-                </span>{" "}
-                to{" "}
-                <span className="font-semibold text-zinc-800 dark:text-zinc-200">
-                  {analytics.period.localToDate}
+            {/* Tracking, Sync, & Coverage Metadata Line */}
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-zinc-500 dark:text-zinc-400">
+              <span>
+                Timezone:{" "}
+                <span className="font-medium text-zinc-700 dark:text-zinc-300">
+                  {currentChannel.timezone}
                 </span>
-              </div>
-            )}
+              </span>
+
+              {channelOverview?.coverage?.observationCoverage?.trackingStartDate && (
+                <span>
+                  • Tracking since:{" "}
+                  <span className="font-medium text-zinc-700 dark:text-zinc-300">
+                    {channelOverview.coverage.observationCoverage.trackingStartDate}
+                  </span>
+                </span>
+              )}
+
+              {channelOverview?.coverage?.historicalCoverageDays !== undefined && (
+                <span>
+                  • Coverage:{" "}
+                  <span className="font-medium text-zinc-700 dark:text-zinc-300">
+                    {channelOverview.coverage.historicalCoverageDays} days recorded
+                  </span>
+                </span>
+              )}
+
+              {channelOverview?.tracking?.lastSyncedAt && (
+                <span>
+                  • Last synced:{" "}
+                  <span className="font-medium text-zinc-700 dark:text-zinc-300">
+                    {new Date(channelOverview.tracking.lastSyncedAt).toLocaleString()}
+                  </span>
+                </span>
+              )}
+
+              {channelOverview?.tracking?.nextPollAt && (
+                <span>
+                  • Next poll:{" "}
+                  <span className="font-medium text-zinc-700 dark:text-zinc-300">
+                    {new Date(channelOverview.tracking.nextPollAt).toLocaleString()}
+                  </span>
+                </span>
+              )}
+
+              {channelOverview?.latestSync?.status === "FAILED" && channelOverview.latestSync.errorMessage && (
+                <span className="text-rose-600 dark:text-rose-400 font-medium">
+                  • Sync error: {channelOverview.latestSync.errorMessage}
+                </span>
+              )}
+            </div>
           </div>
         )}
 

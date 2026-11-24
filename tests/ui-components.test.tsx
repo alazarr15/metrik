@@ -1,7 +1,12 @@
 import { describe, it, expect } from "vitest";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { PrecisionBadge, SyncStatusBadge } from "../src/components/ui/badge.tsx";
+import {
+  PrecisionBadge,
+  SyncStatusBadge,
+  TrackingStatusBadge,
+  BootstrapStatusBadge,
+} from "../src/components/ui/badge.tsx";
 import { MetricCard } from "../src/components/ui/metric-card.tsx";
 import { DailyPostsChart } from "../src/components/charts/daily-posts-chart.tsx";
 import { ObservedGrowthChart } from "../src/components/charts/observed-growth-chart.tsx";
@@ -45,6 +50,56 @@ describe("Dashboard UI Component Rendering", () => {
       const html = renderToStaticMarkup(<SyncStatusBadge status="FAILED" />);
       expect(html).toContain("Failed");
       expect(html).toContain("bg-rose-500");
+    });
+  });
+
+  describe("TrackingStatusBadge", () => {
+    it("renders active worker tracking badge with custom poll interval", () => {
+      const html = renderToStaticMarkup(
+        <TrackingStatusBadge isWorkerActive={true} pollIntervalMinutes={30} />
+      );
+      expect(html).toContain("Tracking Active (30m)");
+      expect(html).toContain("bg-emerald-500");
+      expect(html).toContain("animate-pulse");
+    });
+
+    it("renders stopped tracking badge when worker is inactive", () => {
+      const html = renderToStaticMarkup(
+        <TrackingStatusBadge isWorkerActive={false} />
+      );
+      expect(html).toContain("Tracking Stopped (Worker Offline)");
+      expect(html).toContain("bg-zinc-400");
+    });
+  });
+
+  describe("BootstrapStatusBadge", () => {
+    it("renders COMPLETED status badge", () => {
+      const html = renderToStaticMarkup(<BootstrapStatusBadge status="COMPLETED" />);
+      expect(html).toContain("Bootstrap Complete");
+      expect(html).toContain("bg-emerald-500");
+    });
+
+    it("renders RUNNING status badge", () => {
+      const html = renderToStaticMarkup(<BootstrapStatusBadge status="RUNNING" />);
+      expect(html).toContain("Bootstrap Running");
+      expect(html).toContain("animate-pulse");
+    });
+
+    it("renders INCOMPLETE status badge", () => {
+      const html = renderToStaticMarkup(<BootstrapStatusBadge status="INCOMPLETE" />);
+      expect(html).toContain("Bootstrap Incomplete");
+      expect(html).toContain("bg-amber-500");
+    });
+
+    it("renders FAILED status badge", () => {
+      const html = renderToStaticMarkup(<BootstrapStatusBadge status="FAILED" />);
+      expect(html).toContain("Bootstrap Failed");
+      expect(html).toContain("bg-rose-500");
+    });
+
+    it("renders PENDING status badge by default", () => {
+      const html = renderToStaticMarkup(<BootstrapStatusBadge status="PENDING" />);
+      expect(html).toContain("Bootstrap Pending");
     });
   });
 

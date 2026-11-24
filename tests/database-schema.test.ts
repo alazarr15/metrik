@@ -29,12 +29,30 @@ describe("Database Schema: Prisma DMMF Definitions", () => {
     expect(fieldNames).toContain("updatedAt");
     expect(fieldNames).toContain("posts");
     expect(fieldNames).toContain("syncRuns");
+    expect(fieldNames).toContain("bootstrapStatus");
+    expect(fieldNames).toContain("lastSyncedAt");
+    expect(fieldNames).toContain("nextPollAt");
 
     const usernameField = channelModel!.fields.find((f) => f.name === "telegramUsername");
     expect(usernameField?.isUnique).toBe(true);
 
     const tzField = channelModel!.fields.find((f) => f.name === "timezone");
     expect(tzField?.default).toBe("Africa/Addis_Ababa");
+
+    const bootstrapField = channelModel!.fields.find((f) => f.name === "bootstrapStatus");
+    expect(bootstrapField?.default).toBe("PENDING");
+  });
+
+  it("defines WorkerHeartbeat model with required fields", () => {
+    const workerModel = dmmf.datamodel.models.find((m) => m.name === "WorkerHeartbeat");
+    expect(workerModel).toBeDefined();
+
+    const fieldNames = workerModel!.fields.map((f) => f.name);
+    expect(fieldNames).toContain("id");
+    expect(fieldNames).toContain("workerId");
+    expect(fieldNames).toContain("lastHeartbeatAt");
+    expect(fieldNames).toContain("pollIntervalMin");
+    expect(fieldNames).toContain("status");
   });
 
   it("defines Post model with unique [channelId, telegramMessageId] constraint and soft-delete field", () => {

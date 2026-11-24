@@ -77,6 +77,9 @@ describe("Phase 4 Read-Only API Route Handlers", () => {
         expect(channel).toHaveProperty("telegramUsername");
         expect(channel).toHaveProperty("postsCount");
         expect(typeof channel.postsCount).toBe("number");
+        expect(channel).toHaveProperty("bootstrapStatus");
+        expect(channel).toHaveProperty("lastSyncedAt");
+        expect(channel).toHaveProperty("nextPollAt");
       }
     });
   });
@@ -125,6 +128,14 @@ describe("Phase 4 Read-Only API Route Handlers", () => {
         reason: "Reach is unavailable on Telegram broadcast channels",
       });
       expect(typeof data.summary.postsPublishedTotal).toBe("number");
+
+      // Phase 7 Tracking assertions
+      expect(data).toHaveProperty("tracking");
+      expect(data.tracking).toHaveProperty("status");
+      expect(data.tracking).toHaveProperty("bootstrapStatus");
+      expect(data.tracking).toHaveProperty("isWorkerActive");
+      expect(data.tracking).toHaveProperty("pollIntervalMinutes");
+      expect(typeof data.tracking.pollIntervalMinutes).toBe("number");
 
       // Phase 7 Coverage assertions
       expect(data).toHaveProperty("coverage");

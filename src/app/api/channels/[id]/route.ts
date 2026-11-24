@@ -4,6 +4,7 @@ import { prisma } from "@/server/db/client";
 import { findChannelByIdentifier } from "@/server/db/channel-queries";
 import { ApiValidationError } from "@/server/metrics/validation";
 import { getChannelCoverage } from "@/server/metrics/coverage";
+import { getTrackingWorkerStatus } from "@/server/tracking/tracking-worker";
 
 export async function GET(
   request: Request,
@@ -30,8 +31,8 @@ export async function GET(
       );
     }
 
-    // Query channel summary statistics and coverage
-    const [publishedTotal, deletedTotal, oldestPost, newestPost, latestSync, coverage] =
+    // Query channel summary statistics, coverage, and tracking worker status
+    const [publishedTotal, deletedTotal, oldestPost, newestPost, latestSync, coverage, workerStatus] =
       await Promise.all([
         prisma.post.count({
           where: { channelId: channel.id, deletedAt: null },
@@ -54,6 +55,7 @@ export async function GET(
           orderBy: { startedAt: "desc" },
         }),
         getChannelCoverage(channel.id),
+        getTrackingWorkerStatus(prisma),
       ]);
 
     return NextResponse.json({
@@ -64,6 +66,9 @@ export async function GET(
         timezone: channel.timezone,
         createdAt: channel.createdAt.toISOString(),
         updatedAt: channel.updatedAt.toISOString(),
+        bootstrapStatus: channel.bootstrapStatus,
+        lastSyncedAt: channel.lastSyncedAt ? channel.lastSyncedAt.toISOString() : null,
+        nextPollAt: channel.nextPollAt ? channel.nextPollAt.toISOString() : null,
       },
       summary: {
         postsPublishedTotal: publishedTotal,
@@ -86,6 +91,15 @@ export async function GET(
             postsFetched: latestSync.postsFetched,
           }
         : null,
+      tracking: {
+        status: workerStatus.isWorkerActive ? "ACTIVE" : "STOPPED",
+        bootstrapStatus: channel.bootstrapStatus,
+        isWorkerActive: workerStatus.isWorkerActive,
+        pollIntervalMinutes: workerStatus.pollIntervalMinutes,
+        lastSyncedAt: channel.lastSyncedAt ? channel.lastSyncedAt.toISOString() : null,
+        nextPollAt: channel.nextPollAt ? channel.nextPollAt.toISOString() : null,
+        workerLastHeartbeatAt: workerStatus.lastHeartbeatAt ? workerStatus.lastHeartbeatAt.toISOString() : null,
+      },
       coverage,
     });
   } catch (error) {

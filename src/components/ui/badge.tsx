@@ -2,6 +2,12 @@ import React from "react";
 
 export type PrecisionType = "EXACT" | "ROUNDED" | "UNAVAILABLE";
 export type SyncStatusType = "SUCCESS" | "RUNNING" | "FAILED";
+export type BootstrapStatusType =
+  | "PENDING"
+  | "RUNNING"
+  | "COMPLETED"
+  | "INCOMPLETE"
+  | "FAILED";
 
 interface PrecisionBadgeProps {
   precision: PrecisionType | string;
@@ -79,6 +85,110 @@ export function SyncStatusBadge({ status, className = "" }: SyncStatusBadgeProps
     >
       <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
       Failed
+    </span>
+  );
+}
+
+interface TrackingStatusBadgeProps {
+  isWorkerActive: boolean;
+  pollIntervalMinutes?: number;
+  className?: string;
+}
+
+export function TrackingStatusBadge({
+  isWorkerActive,
+  pollIntervalMinutes = 30,
+  className = "",
+}: TrackingStatusBadgeProps) {
+  if (isWorkerActive) {
+    return (
+      <span
+        className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 ${className}`}
+        title={`Continuous monitoring worker active (polling every ${pollIntervalMinutes} minutes)`}
+      >
+        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+        Tracking Active ({pollIntervalMinutes}m)
+      </span>
+    );
+  }
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-zinc-500/10 text-zinc-500 dark:text-zinc-400 border border-zinc-500/20 ${className}`}
+      title="Background tracking worker is not active. Run 'pnpm track:telegram' to start background polling."
+    >
+      <span className="w-2 h-2 rounded-full bg-zinc-400" />
+      Tracking Stopped (Worker Offline)
+    </span>
+  );
+}
+
+interface BootstrapStatusBadgeProps {
+  status: BootstrapStatusType | string;
+  className?: string;
+}
+
+export function BootstrapStatusBadge({
+  status,
+  className = "",
+}: BootstrapStatusBadgeProps) {
+  const norm = status?.toUpperCase() || "PENDING";
+
+  if (norm === "COMPLETED") {
+    return (
+      <span
+        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 ${className}`}
+        title="Initial 7-day historical bootstrap completed"
+      >
+        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+        Bootstrap Complete
+      </span>
+    );
+  }
+
+  if (norm === "RUNNING") {
+    return (
+      <span
+        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 ${className}`}
+        title="7-day bootstrap sync is currently in progress"
+      >
+        <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+        Bootstrap Running
+      </span>
+    );
+  }
+
+  if (norm === "INCOMPLETE") {
+    return (
+      <span
+        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 ${className}`}
+        title="Historical 7-day bootstrap reached pagination limit before hitting cutoff date"
+      >
+        <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+        Bootstrap Incomplete
+      </span>
+    );
+  }
+
+  if (norm === "FAILED") {
+    return (
+      <span
+        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 ${className}`}
+        title="Historical bootstrap encountered a terminal failure"
+      >
+        <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+        Bootstrap Failed
+      </span>
+    );
+  }
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-zinc-500/10 text-zinc-500 dark:text-zinc-400 border border-zinc-500/20 ${className}`}
+      title="Initial 7-day bootstrap has not run yet"
+    >
+      <span className="w-1.5 h-1.5 rounded-full bg-zinc-400" />
+      Bootstrap Pending
     </span>
   );
 }

@@ -16,6 +16,9 @@ export interface ChannelItem {
   title: string | null;
   timezone: string;
   postsCount: number;
+  bootstrapStatus?: string;
+  lastSyncedAt?: string | null;
+  nextPollAt?: string | null;
   latestSync?: {
     id: string;
     status: SyncStatusType;
