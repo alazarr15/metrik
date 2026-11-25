@@ -220,8 +220,8 @@ export function PostsTable({ channelId, telegramUsername }: PostsTableProps) {
                   <tr
                     key={post.id}
                     onClick={() => setSelectedPost(post)}
-                    className={`hover:bg-[#F7F8FA] transition-colors cursor-pointer ${
-                      isDeleted ? "opacity-60 bg-[#F7F8FA]" : ""
+                    className={`group/row hover:bg-gradient-to-r hover:from-[#EFF6FF]/60 hover:to-transparent transition-colors cursor-pointer ${
+                      isDeleted ? "opacity-60 bg-[#F7F8FA]" : "even:bg-[#FAFAFA]/60"
                     }`}
                   >
                     {/* Message ID (Desktop only) */}
@@ -311,7 +311,7 @@ export function PostsTable({ channelId, telegramUsername }: PostsTableProps) {
             type="button"
             onClick={handlePrevPage}
             disabled={cursorHistory.length === 0 || isLoading}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-xl border border-[#E5E7EB] bg-white text-xs font-medium text-[#111827] shadow-[0_1px_2px_rgba(16,24,40,0.03)] hover:bg-[#F7F8FA] disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed transition-all"
+            className="flex items-center gap-1 px-3.5 py-1.5 rounded-full border border-[#E5E7EB] bg-white text-xs font-medium text-[#111827] shadow-[0_1px_2px_rgba(16,24,40,0.03)] hover:bg-[#F7F8FA] disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed transition-all"
           >
             <ChevronLeftIcon className="w-3.5 h-3.5" />
             <span>Previous</span>
@@ -321,7 +321,7 @@ export function PostsTable({ channelId, telegramUsername }: PostsTableProps) {
             type="button"
             onClick={handleNextPage}
             disabled={!nextCursor || isLoading}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-xl border border-[#E5E7EB] bg-white text-xs font-medium text-[#111827] shadow-[0_1px_2px_rgba(16,24,40,0.03)] hover:bg-[#F7F8FA] disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed transition-all"
+            className="flex items-center gap-1 px-3.5 py-1.5 rounded-full border border-[#E5E7EB] bg-white text-xs font-medium text-[#111827] shadow-[0_1px_2px_rgba(16,24,40,0.03)] hover:bg-[#F7F8FA] disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed transition-all"
           >
             <span>Next</span>
             <ChevronRightIcon className="w-3.5 h-3.5" />

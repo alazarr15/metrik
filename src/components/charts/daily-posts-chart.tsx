@@ -52,7 +52,7 @@ export function DailyPostsChart({ data, total }: DailyPostsChartProps) {
         </div>
       </div>
 
-      <div className="relative w-full overflow-hidden">
+      <div className="relative w-full overflow-hidden rounded-xl bg-dot-grid p-2 -mx-2">
         <svg
           viewBox={`0 0 600 ${height}`}
           className="w-full h-56 select-none"
@@ -60,11 +60,13 @@ export function DailyPostsChart({ data, total }: DailyPostsChartProps) {
         >
           <defs>
             <linearGradient id="cobalt-bar" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#2563EB" />
+              <stop offset="0%" stopColor="#60A5FA" />
+              <stop offset="45%" stopColor="#2563EB" />
               <stop offset="100%" stopColor="#1D4ED8" />
             </linearGradient>
             <linearGradient id="cobalt-bar-hover" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#3B82F6" />
+              <stop offset="0%" stopColor="#93C5FD" />
+              <stop offset="45%" stopColor="#3B82F6" />
               <stop offset="100%" stopColor="#2563EB" />
             </linearGradient>
           </defs>
@@ -80,8 +82,8 @@ export function DailyPostsChart({ data, total }: DailyPostsChartProps) {
                   x2={600 - paddingRight}
                   y2={y}
                   stroke="currentColor"
-                  strokeDasharray="3 3"
-                  className="text-[#E5E7EB]"
+                  strokeDasharray="4 4"
+                  className="text-[#E5E7EB]/80"
                 />
                 <text
                   x={paddingLeft - 6}
@@ -128,10 +130,13 @@ export function DailyPostsChart({ data, total }: DailyPostsChartProps) {
                     y={y}
                     width={barWidth}
                     height={Math.max(barHeight, 2)}
-                    rx={3}
+                    rx={5}
                     fill={isHovered ? "url(#cobalt-bar-hover)" : "url(#cobalt-bar)"}
                     className="transition-all duration-150 animate-grow-bar"
-                    style={{ transformOrigin: `${x + barWidth / 2}px ${paddingTop + chartHeight}px` }}
+                    style={{
+                      transformOrigin: `${x + barWidth / 2}px ${paddingTop + chartHeight}px`,
+                      filter: isHovered ? "drop-shadow(0 4px 8px rgba(37, 99, 235, 0.25))" : undefined,
+                    }}
                   />
                 ) : (
                   /* Zero count baseline indicator */

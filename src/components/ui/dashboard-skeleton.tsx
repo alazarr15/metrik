@@ -7,9 +7,9 @@ import React from "react";
  */
 export function DashboardSkeleton() {
   return (
-    <div className="min-h-screen bg-white flex flex-col font-sans text-[#111827]">
+    <div className="min-h-screen bg-[#FAFAFA] bg-[radial-gradient(ellipse_80%_40%_at_50%_-10%,rgba(37,99,235,0.06),transparent)] flex flex-col font-sans text-[#111827]">
       {/* Top bar skeleton */}
-      <div className="sticky top-0 z-30 w-full border-b border-[#E5E7EB] bg-white/95 backdrop-blur-md">
+      <div className="sticky top-0 z-30 w-full border-b border-[#E5E7EB]/80 bg-white/80 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 gap-2">
             <div className="flex items-center gap-2.5">

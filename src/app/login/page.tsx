@@ -64,9 +64,9 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white dark:bg-zinc-950 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-[#FAFAFA] bg-[radial-gradient(ellipse_80%_50%_at_50%_-10%,rgba(37,99,235,0.12),transparent),radial-gradient(ellipse_60%_40%_at_80%_100%,rgba(79,70,229,0.08),transparent)] p-4">
       <div className="w-full max-w-md">
-        <div className="relative bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 rounded-3xl p-8 shadow-[0_12px_40px_-12px_rgba(37,99,235,0.18)] animate-fade-up">
+        <div className="relative bg-white/85 backdrop-blur-xl border border-[#E5E7EB]/90 rounded-3xl p-8 shadow-[0_20px_50px_-12px_rgba(37,99,235,0.16)] animate-fade-up">
           {/* Header */}
           <div className="text-center mb-7">
             <div className="inline-flex p-3 rounded-2xl bg-gradient-to-tr from-[#1D4ED8] to-[#3B82F6] text-white shadow-[0_6px_18px_rgba(37,99,235,0.35)] mb-3.5">
@@ -116,7 +116,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white font-semibold text-sm shadow-sm transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2 hover:shadow-md"
+              className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#2563EB] to-[#4F46E5] hover:from-[#1D4ED8] hover:to-[#4338CA] active:scale-[0.99] text-white font-semibold text-sm shadow-[0_4px_14px_rgba(37,99,235,0.3)] hover:shadow-[0_6px_20px_rgba(37,99,235,0.38)] transition-all duration-200 cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {isLoading ? (
                 <>

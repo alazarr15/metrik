@@ -373,7 +373,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white flex flex-col font-sans text-[#111827]">
+    <div className="min-h-screen bg-[#FAFAFA] bg-[radial-gradient(ellipse_80%_40%_at_50%_-10%,rgba(37,99,235,0.06),transparent)] flex flex-col font-sans text-[#111827]">
       <Navigation
         channels={channels}
         selectedChannelId={selectedChannelId}
@@ -417,11 +417,15 @@ export default function DashboardPage() {
             type="button"
             onClick={handleRefresh}
             disabled={isRefreshing}
-            className="p-2 rounded-xl border border-[#E5E7EB] bg-white text-[#667085] hover:bg-[#F7F8FA] hover:text-[#111827] shadow-[0_1px_2px_rgba(16,24,40,0.03)] transition-all cursor-pointer disabled:opacity-50 shrink-0"
+            className={`p-2 rounded-xl border bg-white/90 backdrop-blur-sm transition-all duration-200 cursor-pointer disabled:opacity-60 shrink-0 ${
+              isRefreshing
+                ? "border-[#BFDBFE] text-[#2563EB] shadow-[0_0_0_3px_rgba(37,99,235,0.12)]"
+                : "border-[#E5E7EB] text-[#667085] hover:bg-[#F7F8FA] hover:text-[#111827] shadow-[0_1px_2px_rgba(16,24,40,0.03)]"
+            }`}
             title="Refresh analytics data"
             aria-label="Refresh analytics data"
           >
-            <RefreshCwIcon className={`w-4 h-4 ${isRefreshing ? "animate-spin text-[#2563EB]" : ""}`} />
+            <RefreshCwIcon className={`w-4 h-4 transition-transform ${isRefreshing ? "animate-spin text-[#2563EB]" : ""}`} />
           </button>
         </div>
 

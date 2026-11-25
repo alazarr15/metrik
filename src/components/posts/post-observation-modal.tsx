@@ -88,12 +88,16 @@ export function PostObservationModal({
   const telegramUrl = `https://t.me/${telegramUsername}/${telegramMessageId}`;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/50 backdrop-blur-xs animate-in fade-in duration-150">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/55 backdrop-blur-md animate-in fade-in duration-150"
+      onClick={onClose}
+    >
       <div
-        className="relative w-full max-w-2xl max-h-[90vh] flex flex-col rounded-2xl border border-[#E5E7EB] bg-white shadow-xl overflow-hidden"
+        className="relative w-full max-w-2xl max-h-[90vh] flex flex-col rounded-3xl border border-[#E5E7EB] bg-white shadow-2xl overflow-hidden animate-slide-up"
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-post-title"
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
         <div className="flex items-start justify-between p-5 border-b border-[#E5E7EB] bg-white">

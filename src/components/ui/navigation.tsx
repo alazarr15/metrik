@@ -51,7 +51,7 @@ export function DateRangeFilter({
   rangeAvailability,
 }: DateRangeFilterProps) {
   return (
-    <div className="inline-flex items-center p-1 rounded-xl border border-[#E5E7EB] bg-[#F7F8FA]">
+    <div className="inline-flex items-center p-1 rounded-xl border border-[#E5E7EB]/90 bg-white/90 backdrop-blur-sm shadow-[0_1px_2px_rgba(16,24,40,0.03)]">
       <span className="flex items-center px-2 text-[#667085] text-xs">
         <CalendarIcon className="w-3.5 h-3.5" />
       </span>
@@ -68,11 +68,11 @@ export function DateRangeFilter({
             disabled={!isAvailable}
             onClick={() => isAvailable && onSelectRange(r)}
             title={!isAvailable ? reason : undefined}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 ${
               isActive
-                ? "bg-white text-[#2563EB] shadow-xs ring-1 ring-[#E5E7EB] cursor-default"
+                ? "bg-[#EFF6FF] text-[#2563EB] shadow-[0_1px_2px_rgba(37,99,235,0.12)] ring-1 ring-[#BFDBFE] cursor-default"
                 : isAvailable
-                ? "text-[#667085] hover:text-[#111827] hover:bg-white/70 cursor-pointer"
+                ? "text-[#667085] hover:text-[#111827] hover:bg-[#F7F8FA] cursor-pointer"
                 : "opacity-40 text-[#667085] cursor-not-allowed"
             }`}
           >
@@ -128,7 +128,7 @@ export function Navigation({
   ];
 
   return (
-    <header className="sticky top-0 z-30 w-full border-b border-[#E5E7EB] bg-white/95 backdrop-blur-md transition-colors shadow-[0_1px_2px_rgba(16,24,40,0.03)]">
+    <header className="sticky top-0 z-30 w-full border-b border-[#E5E7EB]/80 bg-white/80 backdrop-blur-xl transition-colors shadow-[0_1px_3px_rgba(16,24,40,0.03)]">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 gap-2">
           {/* Left: Brand & Channel Dropdown */}

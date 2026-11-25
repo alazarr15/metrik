@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
+  --background: #fafafa;
   --foreground: #111827;
 
   /* Brand accent (blue, kept from current identity) */
@@ -36,6 +36,7 @@
   /* Motion */
   --animate-fade-up: fade-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
   --animate-pop: pop 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-slide-up: slide-up 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
   --animate-grow-bar: grow-bar 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
   --animate-shimmer: shimmer 2.5s linear infinite;
 }
@@ -62,6 +63,17 @@
   }
 }
 
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 @keyframes grow-bar {
   from {
     transform: scaleY(0);
@@ -80,10 +92,26 @@
   }
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 html, body {
-  background-color: #ffffff !important;
+  background-color: #fafafa !important;
   color: #111827 !important;
   min-height: 100%;
+  font-feature-settings: "ss01", "ss02";
+}
+
+::selection {
+  background-color: #dbeafe;
+  color: #1d4ed8;
+}
+
+/* Subtle dot-grid pattern for chart backdrops */
+.bg-dot-grid {
+  background-image: radial-gradient(rgba(17, 24, 39, 0.06) 1px, transparent 1px);
+  background-size: 16px 16px;
 }
 
 /* Shimmer sweep for skeleton placeholders */

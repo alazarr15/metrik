@@ -176,9 +176,38 @@ export function YouTubeDashboard({
 
   if (isLoading && !analytics) {
     return (
-      <div className="py-24 flex flex-col items-center justify-center gap-3 text-[#667085]">
-        <span className="w-6 h-6 border-2 border-[#2563EB] border-t-transparent rounded-full animate-spin" />
-        <span className="text-xs font-medium">Loading YouTube analytics...</span>
+      <div className="space-y-8 animate-fade-up">
+        <div className="flex items-center justify-between pb-4 border-b border-[#E5E7EB]">
+          <div className="flex items-center gap-3">
+            <div className="skeleton w-10 h-10 rounded-xl" />
+            <div className="space-y-2">
+              <div className="skeleton h-6 w-44 rounded-lg" />
+              <div className="skeleton h-3 w-28 rounded" />
+            </div>
+          </div>
+          <div className="skeleton h-9 w-36 rounded-xl" />
+        </div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="p-4 sm:p-5 rounded-2xl border border-[#E5E7EB] bg-white">
+              <div className="flex items-center justify-between gap-3">
+                <div className="space-y-2 flex-1">
+                  <div className="skeleton h-3 w-16 rounded" />
+                  <div className="skeleton h-7 w-20 rounded-lg" />
+                </div>
+                <div className="skeleton w-10 h-10 rounded-xl" />
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="p-6 rounded-2xl border border-[#E5E7EB] bg-white">
+          <div className="skeleton h-4 w-40 rounded mb-5" />
+          <div className="flex items-end gap-2 h-36">
+            {[45, 70, 35, 85, 55, 90, 40, 65].map((h, i) => (
+              <div key={i} className="skeleton flex-1 rounded-t-md" style={{ height: `${h}%` }} />
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
@@ -399,7 +428,7 @@ export function YouTubeDashboard({
                     : `https://www.youtube.com/watch?v=${v.youtubeVideoId}`;
 
                   return (
-                    <tr key={v.id} className="hover:bg-[#F7F8FA] transition-colors">
+                    <tr key={v.id} className="even:bg-[#FAFAFA]/60 hover:bg-rose-50/40 transition-colors">
                       <td className="py-3 px-1.5 sm:py-3.5 sm:px-3 font-medium text-[#111827] sm:max-w-xs">
                         <div className="flex items-center gap-2 sm:max-w-xs">
                           <a
