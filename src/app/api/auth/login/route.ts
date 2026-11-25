@@ -76,8 +76,8 @@ export async function POST(request: Request) {
     );
   }
 
-  // 5. Log login event (non-blocking)
-  await recordVisit({
+  // 5. Log login event without blocking the auth response
+  void recordVisit({
     role,
     event: "login",
     userAgent: request.headers.get("user-agent"),

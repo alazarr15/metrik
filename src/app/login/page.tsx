@@ -57,6 +57,7 @@ export default function LoginPage() {
       }
 
       // Login succeeded, cookie is set automatically by server
+      router.refresh();
       router.replace("/");
     } catch {
       setErrorMessage("Network error occurred. Please verify your connection.");
