@@ -65,24 +65,21 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#FAFAFA] bg-[radial-gradient(ellipse_80%_50%_at_50%_-10%,rgba(37,99,235,0.12),transparent),radial-gradient(ellipse_60%_40%_at_80%_100%,rgba(79,70,229,0.08),transparent)] p-4">
-      <div className="w-full max-w-md">
-        <div className="relative bg-white/85 backdrop-blur-xl border border-[#E5E7EB]/90 rounded-3xl p-8 shadow-[0_20px_50px_-12px_rgba(37,99,235,0.16)] animate-fade-up">
+      <div className="w-full max-w-sm">
+        <div className="relative bg-white/95 backdrop-blur-xl border border-[#E5E7EB] rounded-3xl p-8 shadow-[0_20px_50px_-12px_rgba(37,99,235,0.16)] animate-fade-up">
           {/* Header */}
           <div className="text-center mb-7">
-            <div className="inline-flex p-3 rounded-2xl bg-gradient-to-tr from-[#1D4ED8] to-[#3B82F6] text-white shadow-[0_6px_18px_rgba(37,99,235,0.35)] mb-3.5">
+            <div className="inline-flex p-3 rounded-2xl bg-gradient-to-tr from-[#1D4ED8] to-[#3B82F6] text-white shadow-[0_6px_18px_rgba(37,99,235,0.35)] mb-3">
               <LogoIcon className="w-7 h-7" />
             </div>
-            <h1 className="text-2xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100">
-              Metrik Dashboard
+            <h1 className="text-2xl font-extrabold tracking-tight text-[#111827]">
+              Metrik
             </h1>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 line-clamp-2">
-              Self-hosted Telegram channel analytics
-            </p>
           </div>
 
           {/* Error Notice */}
           {errorMessage && (
-            <div className="mb-5 flex items-start gap-2.5 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200/80 dark:border-rose-800/60 text-rose-700 dark:text-rose-300 text-xs leading-relaxed">
+            <div className="mb-5 flex items-start gap-2.5 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs leading-relaxed">
               <AlertCircleIcon className="w-4 h-4 mt-0.5 shrink-0" />
               <span className="line-clamp-2">{errorMessage}</span>
             </div>
@@ -93,9 +90,9 @@ export default function LoginPage() {
             <div>
               <label
                 htmlFor="admin-password"
-                className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1.5"
+                className="block text-xs font-semibold text-[#374151] mb-1.5"
               >
-                Administration Password
+                Password
               </label>
               <div className="relative">
                 <input
@@ -105,11 +102,11 @@ export default function LoginPage() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter DASHBOARD_ADMIN_PASSWORD"
+                  placeholder="••••••••"
                   disabled={isLoading}
-                  className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-800/60 text-sm text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 shadow-xs focus:outline-hidden focus:ring-2 focus:ring-indigo-500 transition-all disabled:opacity-50"
+                  className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-[#D1D5DB] bg-white text-sm text-[#111827] placeholder-[#9CA3AF] shadow-xs focus:outline-hidden focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/25 transition-all disabled:opacity-50"
                 />
-                <LockIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                <LockIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#667085]" />
               </div>
             </div>
 
@@ -124,17 +121,10 @@ export default function LoginPage() {
                   <span>Verifying...</span>
                 </>
               ) : (
-                <span>Sign In to Dashboard</span>
+                <span>Verify</span>
               )}
             </button>
           </form>
-
-          {/* Footer note */}
-          <div className="mt-6 pt-5 border-t border-zinc-100 dark:border-zinc-800 text-center">
-            <p className="text-[11px] text-zinc-400 dark:text-zinc-500 line-clamp-2">
-              Metrik requires an administrative password configured on the host server.
-            </p>
-          </div>
         </div>
       </div>
     </div>
