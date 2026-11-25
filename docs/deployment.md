@@ -158,11 +158,28 @@ Add the following **Repository secrets**:
 
 ### Step 4.2: Workflow Behavior
 The workflow file [`.github/workflows/track-telegram.yml`](../.github/workflows/track-telegram.yml) is already configured:
-- **Cron**: Runs automatically every 30 minutes (`*/30 * * * *`).
+- **Cron Fallback**: Runs on an off-peak schedule (`13,43 * * * *`) to avoid global `:00`/`:30` GitHub queue congestion.
 - **Concurrency Protection**: Uses `concurrency: group: track-telegram, cancel-in-progress: false` to ensure scheduled runs never overlap with manual runs.
 - **Bootstrap-First Guarantee**: If the target channel has not completed its initial 7-day bootstrap, the worker automatically runs `runChannelBootstrap` before beginning incremental syncs.
 - **Deduplication**: Only appends new metric observations if counter values change.
-- **Manual Trigger**: Supports on-demand execution via GitHub's **Run workflow** button.
+- **Manual & External Trigger**: Supports on-demand execution via `workflow_dispatch` (GitHub UI or REST API).
+
+### Step 4.3: Reliable 30-Minute Execution ($0 via cron-job.org)
+GitHub Actions `schedule` triggers are best-effort and may be delayed or dropped under load. For guaranteed 30-minute execution at **$0/month**:
+1. Create a **Fine-grained Personal Access Token** on GitHub (**Settings** → **Developer settings** → **Personal access tokens** → **Fine-grained tokens**):
+   - **Repository access**: Only select `metrik`
+   - **Permissions** → **Repository permissions** → **Actions**: `Read and write`
+2. Create a free account at [cron-job.org](https://cron-job.org) and create a new Cronjob:
+   - **URL**: `https://api.github.com/repos/<owner>/<repo>/actions/workflows/track-telegram.yml/dispatches`
+   - **Schedule**: Every 30 minutes
+   - **Request Method**: `POST`
+   - **Headers**:
+     - `Authorization`: `Bearer <YOUR_GITHUB_PAT>`
+     - `Accept`: `application/vnd.github+json`
+     - `User-Agent`: `cron-job.org`
+     - `Content-Type`: `application/json`
+   - **Request Body**: `{"ref":"main"}`
+3. Expected response from GitHub API: `204 No Content`. Every trigger appears immediately under your repository's **Actions** tab.
 
 ---
 

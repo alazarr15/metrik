@@ -7,6 +7,8 @@ interface BreakdownItem {
   count: number;
 }
 
+export type MetricVariant = "indigo" | "violet" | "emerald" | "zinc" | "rose" | "blue" | "amber" | "sky";
+
 interface MetricCardProps {
   title: string;
   value: React.ReactNode;
@@ -16,6 +18,7 @@ interface MetricCardProps {
   breakdown?: BreakdownItem[];
   badgeText?: string;
   unavailableReason?: string;
+  variant?: MetricVariant;
 }
 
 export function MetricCard({
@@ -27,46 +30,66 @@ export function MetricCard({
   breakdown,
   badgeText,
   unavailableReason,
+  variant = "zinc",
 }: MetricCardProps) {
   const [showBreakdown, setShowBreakdown] = useState(false);
 
+  const iconStyles = {
+    indigo: "bg-[#EFF6FF] text-[#2563EB] border border-[#DBEAFE]",
+    violet: "bg-[#EFF6FF] text-[#2563EB] border border-[#DBEAFE]",
+    emerald: "bg-emerald-50 text-emerald-600 border border-emerald-100",
+    rose: "bg-rose-50 text-rose-600 border border-rose-100",
+    blue: "bg-[#EFF6FF] text-[#2563EB] border border-[#DBEAFE]",
+    amber: "bg-amber-50 text-amber-600 border border-amber-100",
+    sky: "bg-sky-50 text-sky-600 border border-sky-100",
+    zinc: "bg-[#F7F8FA] text-[#667085] border border-[#E5E7EB]",
+  }[variant];
+
   return (
-    <div className="flex flex-col justify-between p-5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-xs transition-all hover:border-zinc-300 dark:hover:border-zinc-700">
+    <div className="group relative flex flex-col justify-between p-5 rounded-2xl border border-[#E5E7EB] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)] hover:shadow-[0_4px_12px_rgba(16,24,40,0.06)] hover:border-[#D1D5DB] transition-all duration-200 hover:-translate-y-0.5">
       <div>
-        <div className="flex items-center justify-between text-zinc-500 dark:text-zinc-400 mb-2">
-          <span className="text-xs font-semibold uppercase tracking-wider">{title}</span>
-          {icon && <div className="text-zinc-400 dark:text-zinc-500">{icon}</div>}
+        <div className="flex items-center justify-between text-[#667085] mb-3">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-[#667085]">
+            {title}
+          </span>
+          {icon && (
+            <div className={`p-2 rounded-xl transition-transform duration-200 group-hover:scale-105 ${iconStyles}`}>
+              {icon}
+            </div>
+          )}
         </div>
 
         <div className="flex items-baseline gap-2 mt-1">
-          <div className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+          <div className="text-3xl font-extrabold tracking-tight tabular-nums text-[#111827]">
             {value}
           </div>
           {precision && <PrecisionBadge precision={precision} />}
           {badgeText && (
-            <span className="px-1.5 py-0.5 rounded text-[11px] font-medium tracking-tight bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700">
+            <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold tracking-tight bg-[#EFF6FF] text-[#2563EB] border border-[#DBEAFE]">
               {badgeText}
             </span>
           )}
         </div>
 
         {unavailableReason ? (
-          <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400 italic">
+          <p className="mt-2 text-xs text-[#667085] line-clamp-2">
             {unavailableReason}
           </p>
         ) : subtitle ? (
-          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">{subtitle}</p>
+          <p className="mt-1.5 text-xs text-[#667085] line-clamp-2 font-medium">
+            {subtitle}
+          </p>
         ) : null}
       </div>
 
       {breakdown && breakdown.length > 0 && (
-        <div className="mt-4 pt-3 border-t border-zinc-100 dark:border-zinc-800/80">
+        <div className="mt-4 pt-3 border-t border-[#E5E7EB]">
           <button
             type="button"
             onClick={() => setShowBreakdown((prev) => !prev)}
-            className="flex items-center justify-between w-full text-xs text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 transition-colors cursor-pointer"
+            className="flex items-center justify-between w-full text-xs text-[#667085] hover:text-[#111827] transition-colors cursor-pointer group/btn"
           >
-            <span>View count breakdown</span>
+            <span className="font-medium group-hover/btn:underline">View count breakdown</span>
             <ChevronDownIcon
               className={`w-3.5 h-3.5 transition-transform duration-200 ${
                 showBreakdown ? "rotate-180" : ""
@@ -75,11 +98,11 @@ export function MetricCard({
           </button>
 
           {showBreakdown && (
-            <div className="mt-2.5 space-y-1.5 text-xs text-zinc-600 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-800/50 p-2.5 rounded-lg border border-zinc-100 dark:border-zinc-800">
+            <div className="mt-2.5 space-y-1.5 text-xs text-[#667085] bg-[#F7F8FA] p-3 rounded-xl border border-[#E5E7EB] animate-in fade-in-50 duration-150">
               {breakdown.map((item) => (
-                <div key={item.label} className="flex justify-between items-center">
-                  <span>{item.label}:</span>
-                  <span className="font-semibold text-zinc-800 dark:text-zinc-200">
+                <div key={item.label} className="flex justify-between items-center py-0.5">
+                  <span className="text-[#667085]">{item.label}:</span>
+                  <span className="font-semibold tabular-nums text-[#111827]">
                     {item.count}
                   </span>
                 </div>

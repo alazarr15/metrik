@@ -15,8 +15,8 @@ export function DailyPostsChart({ data, total }: DailyPostsChartProps) {
 
   if (!data || data.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center p-8 text-center border border-dashed border-zinc-200 dark:border-zinc-800 rounded-xl h-64">
-        <p className="text-sm text-zinc-500">No publication data available for this period.</p>
+      <div className="flex flex-col items-center justify-center p-8 text-center border border-dashed border-[#E5E7EB] bg-white rounded-2xl h-64">
+        <p className="text-sm text-[#667085]">No publication data available for this period.</p>
       </div>
     );
   }
@@ -36,19 +36,19 @@ export function DailyPostsChart({ data, total }: DailyPostsChartProps) {
   const yTicks = [0, Math.ceil(maxCount / 2), maxCount];
 
   return (
-    <div className="p-5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-xs">
-      <div className="flex flex-wrap items-baseline justify-between gap-2 mb-4">
+    <div className="p-6 rounded-2xl border border-[#E5E7EB] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-5">
         <div>
-          <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+          <h3 className="text-sm font-bold text-[#111827] tracking-tight">
             Posts Published by Day
           </h3>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-            Non-deleted channel posts aggregated by channel calendar date
+          <p className="text-xs text-[#667085] mt-0.5 line-clamp-1">
+            Daily non-deleted posts in channel timezone.
           </p>
         </div>
-        <div className="text-right">
-          <span className="text-xs text-zinc-500 dark:text-zinc-400">Period Total: </span>
-          <span className="text-sm font-bold text-zinc-900 dark:text-zinc-100">{total}</span>
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EFF6FF] text-[#2563EB] border border-[#DBEAFE]">
+          <span className="text-[11px] font-medium text-[#2563EB]/80">Total:</span>
+          <span className="text-xs font-bold tabular-nums">{total}</span>
         </div>
       </div>
 
@@ -58,6 +58,17 @@ export function DailyPostsChart({ data, total }: DailyPostsChartProps) {
           className="w-full h-56 select-none"
           preserveAspectRatio="none"
         >
+          <defs>
+            <linearGradient id="cobalt-bar" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#2563EB" />
+              <stop offset="100%" stopColor="#1D4ED8" />
+            </linearGradient>
+            <linearGradient id="cobalt-bar-hover" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#3B82F6" />
+              <stop offset="100%" stopColor="#2563EB" />
+            </linearGradient>
+          </defs>
+
           {/* Y Axis Grid lines & Labels */}
           {yTicks.map((tick) => {
             const y = paddingTop + chartHeight - (tick / maxCount) * chartHeight;
@@ -70,13 +81,13 @@ export function DailyPostsChart({ data, total }: DailyPostsChartProps) {
                   y2={y}
                   stroke="currentColor"
                   strokeDasharray="3 3"
-                  className="text-zinc-100 dark:text-zinc-800"
+                  className="text-[#E5E7EB]"
                 />
                 <text
                   x={paddingLeft - 6}
                   y={y + 3}
                   textAnchor="end"
-                  className="fill-zinc-400 text-[10px]"
+                  className="fill-[#667085] text-[10px]"
                 >
                   {tick}
                 </text>
@@ -107,7 +118,7 @@ export function DailyPostsChart({ data, total }: DailyPostsChartProps) {
                   width={slotWidth}
                   height={chartHeight}
                   fill={isHovered ? "currentColor" : "transparent"}
-                  className="text-zinc-50 dark:text-zinc-800/40 transition-colors"
+                  className="text-[#F7F8FA] transition-colors"
                 />
 
                 {/* Actual Bar */}
@@ -117,12 +128,9 @@ export function DailyPostsChart({ data, total }: DailyPostsChartProps) {
                     y={y}
                     width={barWidth}
                     height={Math.max(barHeight, 2)}
-                    rx={2}
-                    className={`transition-colors ${
-                      isHovered
-                        ? "fill-blue-500 dark:fill-blue-400"
-                        : "fill-blue-600 dark:fill-blue-500"
-                    }`}
+                    rx={3}
+                    fill={isHovered ? "url(#cobalt-bar-hover)" : "url(#cobalt-bar)"}
+                    className="transition-all duration-150"
                   />
                 ) : (
                   /* Zero count baseline indicator */
@@ -133,7 +141,7 @@ export function DailyPostsChart({ data, total }: DailyPostsChartProps) {
                     y2={paddingTop + chartHeight}
                     stroke="currentColor"
                     strokeWidth={2}
-                    className="text-zinc-300 dark:text-zinc-700"
+                    className="text-[#E5E7EB]"
                   />
                 )}
 
@@ -143,7 +151,7 @@ export function DailyPostsChart({ data, total }: DailyPostsChartProps) {
                     x={paddingLeft + index * slotWidth + slotWidth / 2}
                     y={height - 10}
                     textAnchor="middle"
-                    className="fill-zinc-400 text-[10px]"
+                    className="fill-[#667085] text-[10px]"
                   >
                     {item.date.slice(5)} {/* MM-DD */}
                   </text>
@@ -156,7 +164,7 @@ export function DailyPostsChart({ data, total }: DailyPostsChartProps) {
         {/* Hover Tooltip Overlay */}
         {hoveredIndex !== null && data[hoveredIndex] && (
           <div
-            className="absolute top-2 left-1/2 -translate-x-1/2 px-2.5 py-1.5 rounded-lg bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 text-xs shadow-md pointer-events-none transition-all z-10"
+            className="absolute top-2 left-1/2 -translate-x-1/2 px-2.5 py-1.5 rounded-lg bg-[#111827] text-white text-xs shadow-md pointer-events-none transition-all z-10"
           >
             <div className="font-semibold">{data[hoveredIndex].date}</div>
             <div className="text-[11px] opacity-90">

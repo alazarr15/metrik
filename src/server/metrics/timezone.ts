@@ -116,20 +116,32 @@ export interface ResolvedPeriod {
  * Resolves a preset range ("1d", "5d", "7d", "15d", "30d", "60d")
  * relative to a reference UTC instant in the channel's timezone.
  *
- * "1d": covers today (1 calendar day).
+ * "1d": covers the rolling past 24 hours [referenceDateUtc - 24h, referenceDateUtc).
  * "5d": covers today and the preceding 4 calendar days (5 calendar days).
  * "7d": covers today and the preceding 6 calendar days (7 calendar days).
  * "15d": covers today and the preceding 14 calendar days (15 calendar days).
  * "30d": covers today and the preceding 29 calendar days (30 calendar days).
  * "60d": covers today and the preceding 59 calendar days (60 calendar days).
  *
- * Interval: [fromUtc, toUtc) where toUtc is next local midnight (00:00:00 of tomorrow).
+ * Interval: [fromUtc, toUtc).
  */
 export function resolvePresetRange(
   preset: PresetKey,
   referenceDateUtc: Date = new Date(),
   timezone: string = DEFAULT_CHANNEL_TIMEZONE
 ): ResolvedPeriod {
+  if (preset === "1d") {
+    const toUtc = new Date(referenceDateUtc.getTime());
+    const fromUtc = new Date(referenceDateUtc.getTime() - 24 * 60 * 60 * 1000);
+    return {
+      fromUtc,
+      toUtc,
+      timezone,
+      localFromDate: formatLocalDate(fromUtc, timezone),
+      localToDate: formatLocalDate(toUtc, timezone),
+    };
+  }
+
   const localToday = formatLocalDate(referenceDateUtc, timezone);
 
   const daysCount = PRESET_DAYS_MAP[preset] ?? 30;

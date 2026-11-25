@@ -1,6 +1,10 @@
 import { type PrismaClient } from "@prisma/client";
 import { prisma as defaultPrisma } from "./client.ts";
-import { resolvePresetRange } from "../metrics/timezone.ts";
+import {
+  formatLocalDate,
+  localMidnightToUtc,
+  resolvePresetRange,
+} from "../metrics/timezone.ts";
 import { validateChannelUsername } from "../public-channel-collector.ts";
 
 export const DEFAULT_RETENTION_DAYS = 60;
@@ -46,7 +50,7 @@ export function calculateRetentionBoundary(
     return resolvePresetRange("60d", referenceDateUtc, timezone).fromUtc;
   }
   // For custom retention day counts:
-  const localToday = resolvePresetRange("1d", referenceDateUtc, timezone).localFromDate;
+  const localToday = formatLocalDate(referenceDateUtc, timezone);
   const todayDateObj = new Date(`${localToday}T00:00:00Z`);
   const startDateObj = new Date(todayDateObj.getTime());
   startDateObj.setUTCDate(startDateObj.getUTCDate() - (retentionDays - 1));
@@ -56,8 +60,7 @@ export function calculateRetentionBoundary(
   const d = String(startDateObj.getUTCDate()).padStart(2, "0");
   const localStartDate = `${y}-${m}-${d}`;
 
-  const { fromUtc } = resolvePresetRange("1d", new Date(`${localStartDate}T12:00:00Z`), timezone);
-  return fromUtc;
+  return localMidnightToUtc(localStartDate, timezone);
 }
 
 /**

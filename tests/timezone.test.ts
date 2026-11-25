@@ -48,12 +48,12 @@ describe("Timezone & Calendar Boundary Utilities", () => {
     // Noon on 2026-11-23 UTC (15:00 on 2026-11-23 in Addis Ababa)
     const ref = new Date("2026-11-23T12:00:00.000Z");
 
-    it("resolves 1d preset to today only", () => {
+    it("resolves 1d preset to the rolling past 24 hours", () => {
       const res = resolvePresetRange("1d", ref, TIMEZONE);
       expect(res.localToDate).toBe("2026-11-23");
-      expect(res.localFromDate).toBe("2026-11-23");
-      expect(res.fromUtc.toISOString()).toBe("2026-11-22T21:00:00.000Z");
-      expect(res.toUtc.toISOString()).toBe("2026-11-23T21:00:00.000Z");
+      expect(res.localFromDate).toBe("2026-11-22");
+      expect(res.fromUtc.toISOString()).toBe("2026-11-22T12:00:00.000Z");
+      expect(res.toUtc.toISOString()).toBe("2026-11-23T12:00:00.000Z");
     });
 
     it("resolves 5d preset to today and preceding 4 calendar days", () => {

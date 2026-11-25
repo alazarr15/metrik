@@ -175,8 +175,10 @@ export function parsePublicChannelHtml(html: string, fallbackUsername = ""): Pub
       }
     }
 
-    // Message text
-    const text = $wrap.find(".tgme_widget_message_text").text().trim();
+    // Message text (preserve <br> line breaks and avoid duplicate nested text blocks)
+    const $textEl = $wrap.find(".tgme_widget_message_text").first();
+    $textEl.find("br").replaceWith("\n");
+    const text = $textEl.text().replace(/\r\n/g, "\n").trim();
 
     // Views
     const $views = $wrap.find(".tgme_widget_message_views");
@@ -191,7 +193,9 @@ export function parsePublicChannelHtml(html: string, fallbackUsername = ""): Pub
     $wrap.find(".tgme_reaction").each((__, reaction) => {
       hasReactions = true;
       const reactionText = $(reaction).text().trim();
-      const parsed = parseDisplayCounter(reactionText);
+      const countMatch = reactionText.match(/[\d.]+\s*[KM]?/i);
+      const counterText = countMatch ? countMatch[0].replace(/\s+/g, "") : (reactionText ? "1" : null);
+      const parsed = parseDisplayCounter(counterText);
       if (parsed.numericValue !== null) {
         totalReactions += parsed.numericValue;
       }
@@ -200,7 +204,7 @@ export function parsePublicChannelHtml(html: string, fallbackUsername = ""): Pub
       }
     });
 
-    const reactionsCount: ParsedCounter = hasReactions
+    const reactionsCount: ParsedCounter = hasReactions && totalReactions > 0
       ? {
           rawText: String(totalReactions),
           numericValue: totalReactions,

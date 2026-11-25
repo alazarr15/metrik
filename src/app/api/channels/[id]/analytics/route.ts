@@ -95,6 +95,21 @@ export async function GET(
     }));
     const lifetimeViews = calculateLifetimeViews(lifetimePosts);
 
+    // Calculate Views on posts published within the selected filter period
+    const periodActivePosts = activePosts.filter(
+      (p) => p.publishedAt >= period.fromUtc && p.publishedAt < period.toUtc
+    );
+    const periodViewsPosts = periodActivePosts.map((p) => ({
+      postId: p.id,
+      latestViews: p.observations[0]
+        ? {
+            numericValue: p.observations[0].numericValue,
+            precision: p.observations[0].precision,
+          }
+        : null,
+    }));
+    const periodViews = calculateLifetimeViews(periodViewsPosts);
+
     // Calculate Observed Views Growth
     const growthPosts = activePosts.map((p) => ({
       postId: p.id,
@@ -127,6 +142,7 @@ export async function GET(
       },
       postsPublished,
       lifetimeViews,
+      periodViews,
       observedViewsGrowth,
       reach: {
         status: "UNAVAILABLE",

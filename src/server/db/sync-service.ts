@@ -12,7 +12,11 @@ import {
   createObservationFromParsedCounter,
   sanitizeSyncRunError,
 } from "./integrity.ts";
-import { resolvePresetRange } from "../metrics/timezone.ts";
+import {
+  formatLocalDate,
+  localMidnightToUtc,
+  resolvePresetRange,
+} from "../metrics/timezone.ts";
 
 export const DEFAULT_SYNC_MAX_PAGES = 2;
 export const MAX_ALLOWED_SYNC_PAGES = 10;
@@ -154,7 +158,7 @@ export async function syncPublicChannel(
       if (options.targetDays === 7) {
         stopBeforeDate = resolvePresetRange("7d", new Date(), channel.timezone).fromUtc;
       } else {
-        const localToday = resolvePresetRange("1d", new Date(), channel.timezone).localFromDate;
+        const localToday = formatLocalDate(new Date(), channel.timezone);
         const todayDateObj = new Date(`${localToday}T00:00:00Z`);
         const startDateObj = new Date(todayDateObj.getTime());
         startDateObj.setUTCDate(startDateObj.getUTCDate() - (options.targetDays - 1));
@@ -162,7 +166,7 @@ export async function syncPublicChannel(
         const m = String(startDateObj.getUTCMonth() + 1).padStart(2, "0");
         const d = String(startDateObj.getUTCDate()).padStart(2, "0");
         const localStartDate = `${y}-${m}-${d}`;
-        stopBeforeDate = resolvePresetRange("1d", new Date(`${localStartDate}T12:00:00Z`), channel.timezone).fromUtc;
+        stopBeforeDate = localMidnightToUtc(localStartDate, channel.timezone);
       }
     }
 
