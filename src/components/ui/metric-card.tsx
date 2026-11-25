@@ -18,12 +18,12 @@ function AnimatedNumber({ value }: { value: number }) {
       };
     }
 
-    const duration = 700;
+    const duration = 1400;
     const start = performance.now();
     const tick = (now: number) => {
       const progress = Math.min((now - start) / duration, 1);
-      // easeOutExpo for a snappy-but-smooth settle
-      const eased = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+      // easeOutCubic for a smooth, clearly visible count-up
+      const eased = progress === 1 ? 1 : 1 - Math.pow(1 - progress, 3);
       setDisplay(Math.round(eased * value));
       if (progress < 1) {
         frame.current = requestAnimationFrame(tick);

@@ -289,7 +289,7 @@ export function YouTubeDashboard({
             title="Subscribers"
             value={
               analytics.channel.subscriberCount !== null
-                ? analytics.channel.subscriberCount.toLocaleString()
+                ? analytics.channel.subscriberCount
                 : "—"
             }
             icon={<UsersIcon className="w-4 h-4" />}
@@ -309,7 +309,7 @@ export function YouTubeDashboard({
             title="Views"
             value={
               analytics.periodTotals.views !== null
-                ? analytics.periodTotals.views.toLocaleString()
+                ? analytics.periodTotals.views
                 : "—"
             }
             icon={<PlayIcon className="w-4 h-4" />}
@@ -321,7 +321,7 @@ export function YouTubeDashboard({
             title="Likes"
             value={
               analytics.periodTotals.likes !== null
-                ? analytics.periodTotals.likes.toLocaleString()
+                ? analytics.periodTotals.likes
                 : "—"
             }
             icon={<ThumbsUpIcon className="w-4 h-4" />}

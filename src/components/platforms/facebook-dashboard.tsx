@@ -287,7 +287,7 @@ export function FacebookDashboard({
             title="Followers"
             value={
               analytics.page.followersCount !== null
-                ? analytics.page.followersCount.toLocaleString()
+                ? analytics.page.followersCount
                 : "—"
             }
             icon={<UsersIcon className="w-4 h-4" />}
@@ -307,7 +307,7 @@ export function FacebookDashboard({
             title="Views"
             value={
               analytics.periodTotals.views !== null
-                ? analytics.periodTotals.views.toLocaleString()
+                ? analytics.periodTotals.views
                 : "—"
             }
             icon={<EyeIcon className="w-4 h-4" />}
@@ -319,7 +319,7 @@ export function FacebookDashboard({
             title="Reactions"
             value={
               analytics.periodTotals.reactions !== null
-                ? analytics.periodTotals.reactions.toLocaleString()
+                ? analytics.periodTotals.reactions
                 : "—"
             }
             icon={<ThumbsUpIcon className="w-4 h-4" />}

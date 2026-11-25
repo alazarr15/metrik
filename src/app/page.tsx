@@ -469,7 +469,7 @@ export default function DashboardPage() {
 
                 <MetricCard
                   title="Views"
-                  value={(analytics.periodViews || analytics.lifetimeViews).totalEstimate.toLocaleString()}
+                  value={(analytics.periodViews || analytics.lifetimeViews).totalEstimate}
                   icon={<EyeIcon className="w-4 h-4" />}
                   variant="violet"
                   animationDelayMs={70}
