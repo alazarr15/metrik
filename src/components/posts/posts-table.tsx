@@ -7,7 +7,7 @@ import {
   AlertCircleIcon,
   ClockIcon,
 } from "../ui/icons";
-import { PrecisionBadge, PrecisionType } from "../ui/badge";
+import { PrecisionType } from "../ui/badge";
 import { PostObservationModal } from "./post-observation-modal";
 
 export interface PostMetricSnapshot {
@@ -182,14 +182,14 @@ export function PostsTable({ channelId, telegramUsername }: PostsTableProps) {
 
       {/* Table Content */}
       <div className="overflow-x-auto my-2">
-        <table className="w-full text-left text-xs min-w-[640px]">
+        <table className="w-full text-left text-xs sm:min-w-[640px]">
           <thead>
             <tr className="border-b border-[#E5E7EB] text-[#667085] font-semibold uppercase tracking-wider text-[11px]">
-              <th className="py-3 px-3 font-semibold">Post ID</th>
-              <th className="py-3 px-3 font-semibold">Published</th>
-              <th className="py-3 px-3 font-semibold max-w-xs">Text Preview</th>
-              <th className="py-3 px-3 font-semibold">Views</th>
-              <th className="py-3 px-3 font-semibold text-right">Actions</th>
+              <th className="py-3 px-3 font-semibold hidden sm:table-cell">Post ID</th>
+              <th className="py-3 px-2.5 sm:px-3 font-semibold">Published</th>
+              <th className="py-3 px-2.5 sm:px-3 font-semibold">Text Preview</th>
+              <th className="py-3 px-2.5 sm:px-3 font-semibold">Views</th>
+              <th className="py-3 px-3 font-semibold text-right hidden sm:table-cell">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[#E5E7EB]/70">
@@ -212,21 +212,26 @@ export function PostsTable({ channelId, telegramUsername }: PostsTableProps) {
               posts.map((post) => {
                 const tgUrl = `https://t.me/${telegramUsername}/${post.telegramMessageId}`;
                 const isDeleted = post.deletedAt !== null;
+                const cleanText = post.text ? post.text.replace(/\s+/g, " ").trim() : "";
+                const shortPreview =
+                  cleanText.length > 15 ? `${cleanText.slice(0, 15)}...` : cleanText;
 
                 return (
                   <tr
                     key={post.id}
-                    className={`hover:bg-[#F7F8FA] transition-colors ${
+                    onClick={() => setSelectedPost(post)}
+                    className={`hover:bg-[#F7F8FA] transition-colors cursor-pointer ${
                       isDeleted ? "opacity-60 bg-[#F7F8FA]" : ""
                     }`}
                   >
-                    {/* Message ID */}
-                    <td className="py-3.5 px-3 font-mono font-semibold text-[#111827]">
+                    {/* Message ID (Desktop only) */}
+                    <td className="py-3.5 px-3 font-mono font-semibold text-[#111827] hidden sm:table-cell">
                       <div className="flex items-center gap-1.5">
                         <a
                           href={tgUrl}
                           target="_blank"
                           rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
                           className="hover:underline flex items-center gap-1 text-[#2563EB] font-medium"
                         >
                           #{post.telegramMessageId}
@@ -241,27 +246,27 @@ export function PostsTable({ channelId, telegramUsername }: PostsTableProps) {
                     </td>
 
                     {/* Published Date */}
-                    <td className="py-3.5 px-3 text-[#667085] whitespace-nowrap">
+                    <td className="py-3.5 px-2.5 sm:px-3 text-[#667085] whitespace-nowrap">
                       <div className="flex items-center gap-1.5 text-[11px]">
-                        <ClockIcon className="w-3 h-3 text-[#667085]" />
+                        <ClockIcon className="w-3 h-3 text-[#667085] shrink-0" />
                         <span>{new Date(post.publishedAt).toLocaleDateString()}</span>
                       </div>
                     </td>
 
-                    {/* Text Preview */}
-                    <td className="py-3.5 px-3 max-w-xs text-[#111827]">
+                    {/* Text Preview (12-15 chars) */}
+                    <td className="py-3.5 px-2.5 sm:px-3 text-[#111827]">
                       <div
-                        className="truncate max-w-xs font-sans text-xs"
+                        className="font-sans text-xs whitespace-nowrap"
                         title={post.text || "No text content"}
                       >
-                        {post.text || <span className="text-[#667085] italic">Media post</span>}
+                        {shortPreview || <span className="text-[#667085] italic">Media post</span>}
                       </div>
                     </td>
 
                     {/* Views */}
-                    <td className="py-3.5 px-3">
+                    <td className="py-3.5 px-2.5 sm:px-3 whitespace-nowrap">
                       <div className="flex items-center gap-1.5">
-                        <EyeIcon className="w-3.5 h-3.5 text-[#667085]" />
+                        <EyeIcon className="w-3.5 h-3.5 text-[#667085] shrink-0" />
                         <span className="font-bold text-[#111827] tabular-nums">
                           {post.metrics.views.numericValue !== null ? (
                             post.metrics.views.numericValue.toLocaleString()
@@ -269,15 +274,17 @@ export function PostsTable({ channelId, telegramUsername }: PostsTableProps) {
                             <span className="font-normal text-[#667085] italic">null</span>
                           )}
                         </span>
-                        <PrecisionBadge precision={post.metrics.views.precision} />
                       </div>
                     </td>
 
-                    {/* Actions */}
-                    <td className="py-3.5 px-3 text-right">
+                    {/* Actions (Desktop only) */}
+                    <td className="py-3.5 px-3 text-right hidden sm:table-cell">
                       <button
                         type="button"
-                        onClick={() => setSelectedPost(post)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedPost(post);
+                        }}
                         className="px-2.5 py-1 rounded-lg border border-[#E5E7EB] bg-white text-[11px] font-semibold text-[#111827] shadow-[0_1px_2px_rgba(16,24,40,0.03)] hover:bg-[#EFF6FF] hover:text-[#2563EB] hover:border-[#DBEAFE] hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer"
                       >
                         View Post

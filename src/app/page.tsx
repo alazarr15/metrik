@@ -2,18 +2,17 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Navigation, ChannelItem, RangePreset, PlatformType } from "@/components/ui/navigation";
+import {
+  Navigation,
+  DateRangeFilter,
+  ChannelItem,
+  RangePreset,
+  PlatformType,
+} from "@/components/ui/navigation";
 import { MetricCard } from "@/components/ui/metric-card";
 import { DailyPostsChart, DailyPostData } from "@/components/charts/daily-posts-chart";
 import { PostsTable } from "@/components/posts/posts-table";
-import {
-  EyeIcon,
-  BarChart3Icon,
-  AlertCircleIcon,
-  TelegramIcon,
-  YouTubeIcon,
-  FacebookIcon,
-} from "@/components/ui/icons";
+import { EyeIcon, BarChart3Icon, AlertCircleIcon, RefreshCwIcon } from "@/components/ui/icons";
 import { YouTubeDashboard } from "@/components/platforms/youtube-dashboard";
 import { FacebookDashboard } from "@/components/platforms/facebook-dashboard";
 
@@ -158,13 +157,40 @@ export default function DashboardPage() {
   const [selectedRange, setSelectedRange] = useState<RangePreset>("7d");
   const [selectedPlatform, setSelectedPlatform] = useState<PlatformType>("telegram");
 
+  // Restore last selected platform on mount (URL ?platform= takes precedence over localStorage)
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const fromUrl = params.get("platform");
+      const fromStorage = window.localStorage.getItem("metrik_platform");
+      const candidate = fromUrl || fromStorage;
+      if (candidate === "telegram" || candidate === "youtube" || candidate === "facebook") {
+        queueMicrotask(() => setSelectedPlatform(candidate));
+      }
+    } catch {
+      // Ignore storage access errors
+    }
+  }, []);
+
+  function handleSelectPlatform(platform: PlatformType) {
+    setSelectedPlatform(platform);
+    try {
+      window.localStorage.setItem("metrik_platform", platform);
+      const url = new URL(window.location.href);
+      url.searchParams.set("platform", platform);
+      window.history.replaceState({}, "", url.toString());
+    } catch {
+      // Ignore storage/history errors
+    }
+  }
+
   const [channelOverview, setChannelOverview] = useState<ChannelOverviewData | null>(null);
   const [analytics, setAnalytics] = useState<AnalyticsPayload | null>(null);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [refreshTick, setRefreshTick] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true);
 
   // Initial fetch for channels
   useEffect(() => {
@@ -271,7 +297,7 @@ export default function DashboardPage() {
 
   // Periodic background auto-refresh every 30 seconds
   useEffect(() => {
-    if (!selectedChannelId || !autoRefreshEnabled) return;
+    if (!selectedChannelId) return;
 
     const intervalId = setInterval(async () => {
       try {
@@ -301,7 +327,7 @@ export default function DashboardPage() {
     return () => {
       clearInterval(intervalId);
     };
-  }, [selectedChannelId, selectedRange, autoRefreshEnabled, router]);
+  }, [selectedChannelId, selectedRange, router]);
 
   async function handleLogout() {
     try {
@@ -313,6 +339,11 @@ export default function DashboardPage() {
 
   function handleRefresh() {
     setIsRefreshing(true);
+    setRefreshTick((prev) => prev + 1);
+    if (selectedPlatform !== "telegram") {
+      setTimeout(() => setIsRefreshing(false), 400);
+      return;
+    }
     // Trigger reload by re-fetching
     if (selectedChannelId) {
       setIsLoading(true);
@@ -336,21 +367,27 @@ export default function DashboardPage() {
 
   const currentChannel = channels.find((c) => c.id === selectedChannelId) || channels[0];
 
+  if (isLoading && !analytics && !errorMessage) {
+    return (
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-3 font-sans text-[#111827]">
+        <span className="w-7 h-7 border-2 border-[#2563EB] border-t-transparent rounded-full animate-spin" />
+        <p className="text-xs font-medium text-[#667085]">Loading dashboard...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-white flex flex-col font-sans text-[#111827]">
       <Navigation
         channels={channels}
         selectedChannelId={selectedChannelId}
         onSelectChannel={setSelectedChannelId}
-        selectedRange={selectedRange}
-        onSelectRange={setSelectedRange}
-        rangeAvailability={channelOverview?.coverage?.rangeAvailability}
+        selectedPlatform={selectedPlatform}
+        onSelectPlatform={handleSelectPlatform}
         onLogout={handleLogout}
-        onRefresh={handleRefresh}
-        isRefreshing={isRefreshing}
       />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6 sm:space-y-8">
         {/* Error Banner */}
         {errorMessage && (
           <div className="flex items-center justify-between p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs">
@@ -368,51 +405,32 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Platform Selector Tabs */}
-        <div className="grid grid-cols-3 sm:flex items-center gap-2 pb-2">
-          <button
-            type="button"
-            onClick={() => setSelectedPlatform("telegram")}
-            className={`flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
+        {/* Day Filter Bar (1D, 7D, 15D, 30D) & Refresh */}
+        <div className="flex items-center justify-between gap-3">
+          <DateRangeFilter
+            selectedRange={selectedRange}
+            onSelectRange={setSelectedRange}
+            rangeAvailability={
               selectedPlatform === "telegram"
-                ? "bg-[#2563EB] text-white border-[#2563EB] shadow-xs"
-                : "bg-white text-[#667085] border-[#E5E7EB] hover:bg-[#F7F8FA] hover:text-[#111827] hover:border-[#D1D5DB] shadow-2xs"
-            }`}
-          >
-            <TelegramIcon className="w-4 h-4" />
-            <span>Telegram</span>
-          </button>
+                ? channelOverview?.coverage?.rangeAvailability
+                : undefined
+            }
+          />
 
           <button
             type="button"
-            onClick={() => setSelectedPlatform("youtube")}
-            className={`flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
-              selectedPlatform === "youtube"
-                ? "bg-rose-600 text-white border-rose-600 shadow-xs"
-                : "bg-white text-[#667085] border-[#E5E7EB] hover:bg-[#F7F8FA] hover:text-[#111827] hover:border-[#D1D5DB] shadow-2xs"
-            }`}
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="p-2 rounded-xl border border-[#E5E7EB] bg-white text-[#667085] hover:bg-[#F7F8FA] hover:text-[#111827] shadow-[0_1px_2px_rgba(16,24,40,0.03)] transition-all cursor-pointer disabled:opacity-50 shrink-0"
+            title="Refresh analytics data"
+            aria-label="Refresh analytics data"
           >
-            <YouTubeIcon className="w-4 h-4" />
-            <span>YouTube</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setSelectedPlatform("facebook")}
-            className={`flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
-              selectedPlatform === "facebook"
-                ? "bg-blue-600 text-white border-blue-600 shadow-xs"
-                : "bg-white text-[#667085] border-[#E5E7EB] hover:bg-[#F7F8FA] hover:text-[#111827] hover:border-[#D1D5DB] shadow-2xs"
-            }`}
-          >
-            <FacebookIcon className="w-4 h-4" />
-            <span>Facebook</span>
+            <RefreshCwIcon className={`w-4 h-4 ${isRefreshing ? "animate-spin text-[#2563EB]" : ""}`} />
           </button>
         </div>
 
         {/* TELEGRAM PLATFORM VIEW */}
-        {selectedPlatform === "telegram" && (
-          <div className="space-y-8">
+        <div className={selectedPlatform === "telegram" ? "block space-y-8" : "hidden"}>
             {/* No channels configured */}
             {!isLoading && channels.length === 0 && (
               <div className="py-20 text-center rounded-2xl border border-dashed border-[#E5E7EB] bg-white p-8 shadow-xs">
@@ -431,38 +449,10 @@ export default function DashboardPage() {
 
             {/* Clean Channel Details Header */}
             {currentChannel && (
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E5E7EB]">
-                <div className="flex items-center gap-3">
-                  <h1 className="text-2xl font-bold tracking-tight text-[#111827]">
-                    {currentChannel.title || currentChannel.telegramUsername}
-                  </h1>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2.5">
-                  <button
-                    type="button"
-                    onClick={() => setAutoRefreshEnabled((prev) => !prev)}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all cursor-pointer ${
-                      autoRefreshEnabled
-                        ? "bg-emerald-50 text-emerald-700 border-emerald-200/80 shadow-2xs hover:bg-emerald-100/70"
-                        : "bg-[#F7F8FA] text-[#667085] border-[#E5E7EB] hover:bg-zinc-100"
-                    }`}
-                    title="Toggle 30-second background polling auto-refresh"
-                  >
-                    <span
-                      className={`w-1.5 h-1.5 rounded-full ${
-                        autoRefreshEnabled ? "bg-emerald-500 animate-pulse" : "bg-[#667085]"
-                      }`}
-                    />
-                    Auto-refresh: {autoRefreshEnabled ? "30s" : "off"}
-                  </button>
-
-                  {analytics && (
-                    <div className="text-xs text-[#667085] bg-[#F7F8FA] px-3.5 py-1.5 rounded-full border border-[#E5E7EB] font-medium tabular-nums">
-                      {analytics.period.localFromDate} – {analytics.period.localToDate}
-                    </div>
-                  )}
-                </div>
+              <div className="pb-4 border-b border-[#E5E7EB]">
+                <h1 className="text-2xl font-bold tracking-tight text-[#111827]">
+                  {currentChannel.title || currentChannel.telegramUsername}
+                </h1>
               </div>
             )}
 
@@ -509,7 +499,7 @@ export default function DashboardPage() {
             )}
 
             {/* Channel Posts Table */}
-            {currentChannel && (
+            {currentChannel && analytics && (
               <section className="w-full">
                 <PostsTable
                   channelId={currentChannel.id}
@@ -517,24 +507,17 @@ export default function DashboardPage() {
                 />
               </section>
             )}
-          </div>
-        )}
+        </div>
 
         {/* YOUTUBE PLATFORM VIEW */}
-        {selectedPlatform === "youtube" && (
-          <YouTubeDashboard
-            period={analytics?.period}
-            selectedRange={selectedRange}
-          />
-        )}
+        <div className={selectedPlatform === "youtube" ? "block" : "hidden"}>
+          <YouTubeDashboard selectedRange={selectedRange} refreshTrigger={refreshTick} />
+        </div>
 
         {/* FACEBOOK PLATFORM VIEW */}
-        {selectedPlatform === "facebook" && (
-          <FacebookDashboard
-            period={analytics?.period}
-            selectedRange={selectedRange}
-          />
-        )}
+        <div className={selectedPlatform === "facebook" ? "block" : "hidden"}>
+          <FacebookDashboard selectedRange={selectedRange} refreshTrigger={refreshTick} />
+        </div>
       </main>
     </div>
   );

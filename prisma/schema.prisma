@@ -115,3 +115,153 @@ model WorkerHeartbeat {
 
   @@map("worker_heartbeats")
 }
+
+model YouTubeChannel {
+  id                String           @id @default(cuid())
+  handle            String           @unique
+  youtubeChannelId  String           @unique
+  title             String
+  uploadsPlaylistId String
+  subscriberCount   Int?
+  totalViewCount    BigInt?
+  videoCount        Int?
+  timezone          String           @default("Africa/Addis_Ababa")
+  lastSyncedAt      DateTime?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  videos            YouTubeVideo[]
+  syncRuns          YouTubeSyncRun[]
+
+  @@map("youtube_channels")
+}
+
+model YouTubeVideo {
+  id             String                    @id @default(cuid())
+  channelId      String
+  youtubeVideoId String
+  title          String
+  publishedAt    DateTime
+  duration       String?
+  isShort        Boolean                   @default(false)
+  viewCount      Int?
+  likeCount      Int?
+  commentCount   Int?
+  createdAt      DateTime                  @default(now())
+  updatedAt      DateTime                  @updatedAt
+
+  channel        YouTubeChannel            @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  observations   YouTubeVideoObservation[]
+
+  @@unique([channelId, youtubeVideoId])
+  @@index([channelId, publishedAt])
+  @@index([publishedAt])
+  @@map("youtube_videos")
+}
+
+model YouTubeVideoObservation {
+  id           String       @id @default(cuid())
+  videoId      String
+  observedAt   DateTime     @default(now())
+  viewCount    Int?
+  likeCount    Int?
+  commentCount Int?
+
+  video        YouTubeVideo @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  @@index([videoId, observedAt])
+  @@map("youtube_video_observations")
+}
+
+model YouTubeSyncRun {
+  id            String         @id @default(cuid())
+  channelId     String
+  startedAt     DateTime       @default(now())
+  finishedAt    DateTime?
+  status        SyncStatus     @default(RUNNING)
+  videosFetched Int            @default(0)
+  errorMessage  String?
+
+  channel       YouTubeChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  @@index([channelId, startedAt])
+  @@map("youtube_sync_runs")
+}
+
+enum FacebookItemType {
+  POST
+  REEL
+}
+
+model FacebookPage {
+  id             String            @id @default(cuid())
+  facebookPageId String            @unique
+  name           String
+  followersCount Int?
+  fanCount       Int?
+  timezone       String            @default("Africa/Addis_Ababa")
+  lastSyncedAt   DateTime?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  items          FacebookItem[]
+  syncRuns       FacebookSyncRun[]
+
+  @@map("facebook_pages")
+}
+
+model FacebookItem {
+  id             String                    @id @default(cuid())
+  pageId         String
+  facebookItemId String
+  itemType       FacebookItemType          @default(POST)
+  message        String?
+  permalinkUrl   String?
+  publishedAt    DateTime
+  viewsCount     Int?
+  reachCount     Int?
+  reactionsCount Int?
+  commentsCount  Int?
+  sharesCount    Int?
+  createdAt      DateTime                  @default(now())
+  updatedAt      DateTime                  @updatedAt
+
+  page           FacebookPage              @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  observations   FacebookItemObservation[]
+
+  @@unique([pageId, facebookItemId])
+  @@index([pageId, publishedAt])
+  @@index([publishedAt])
+  @@map("facebook_items")
+}
+
+model FacebookItemObservation {
+  id             String       @id @default(cuid())
+  itemId         String
+  observedAt     DateTime     @default(now())
+  viewsCount     Int?
+  reachCount     Int?
+  reactionsCount Int?
+  commentsCount  Int?
+  sharesCount    Int?
+
+  item           FacebookItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([itemId, observedAt])
+  @@map("facebook_item_observations")
+}
+
+model FacebookSyncRun {
+  id           String       @id @default(cuid())
+  pageId       String
+  startedAt    DateTime     @default(now())
+  finishedAt   DateTime?
+  status       SyncStatus   @default(RUNNING)
+  itemsFetched Int          @default(0)
+  errorMessage String?
+
+  page         FacebookPage @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  @@index([pageId, startedAt])
+  @@map("facebook_sync_runs")
+}

@@ -1,358 +1,465 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { MetricCard } from "../ui/metric-card";
-import { UsersIcon, YouTubeIcon, ClockIcon, BarChart3Icon, PlayIcon, ThumbsUpIcon, MessageSquareIcon } from "../ui/icons";
+import {
+  UsersIcon,
+  YouTubeIcon,
+  BarChart3Icon,
+  PlayIcon,
+  ThumbsUpIcon,
+  MessageSquareIcon,
+  ExternalLinkIcon,
+  AlertCircleIcon,
+} from "../ui/icons";
 
-interface YouTubeDashboardProps {
-  period?: { localFromDate: string; localToDate: string };
-  selectedRange: string;
+interface YouTubeChannelSummary {
+  id: string;
+  handle: string;
+  youtubeChannelId: string;
+  title: string;
+  subscriberCount: number | null;
+  totalViewCount: string | null;
+  videoCount: number | null;
+  lastSyncedAt: string | null;
 }
 
-export function YouTubeDashboard({ period, selectedRange }: YouTubeDashboardProps) {
-  const sampleDailyViews = [
-    { date: "11-18", views: 2840 },
-    { date: "11-19", views: 3410 },
-    { date: "11-20", views: 4120 },
-    { date: "11-21", views: 2950 },
-    { date: "11-22", views: 4890 },
-    { date: "11-23", views: 5120 },
-    { date: "11-24", views: 3270 },
-  ];
+interface YouTubeDailyPoint {
+  date: string;
+  count: number;
+  views: number;
+}
 
-  const maxViews = Math.max(...sampleDailyViews.map((d) => d.views), 1);
+interface YouTubeAnalyticsPayload {
+  channel: YouTubeChannelSummary;
+  period: {
+    localFromDate: string;
+    localToDate: string;
+  };
+  videosPublished: {
+    total: number;
+    breakdown?: {
+      all: number;
+      videos: number;
+      shorts: number;
+    };
+    daily: YouTubeDailyPoint[];
+  };
+  periodTotals: {
+    views: number | null;
+    likes: number | null;
+    comments: number | null;
+  };
+}
 
-  const sampleVideos = [
-    {
-      id: "yt-1",
-      title: "Toyota Land Cruiser 300 Review & Test Drive",
-      publishedAt: "2026-11-22",
-      views: 48200,
-      likes: 1420,
-      comments: 184,
-      duration: "14:28",
-    },
-    {
-      id: "yt-2",
-      title: "Top 5 Luxury SUVs in 2026: Features & Pricing",
-      publishedAt: "2026-11-20",
-      views: 32150,
-      likes: 980,
-      comments: 92,
-      duration: "18:05",
-    },
-    {
-      id: "yt-3",
-      title: "Engine Maintenance Tips for Diesel Trucks",
-      publishedAt: "2026-11-18",
-      views: 19400,
-      likes: 610,
-      comments: 45,
-      duration: "09:42",
-    },
-    {
-      id: "yt-4",
-      title: "Electric vs Hybrid in Daily Commutes",
-      publishedAt: "2026-11-15",
-      views: 26800,
-      likes: 850,
-      comments: 112,
-      duration: "12:15",
-    },
-    {
-      id: "yt-5",
-      title: "Full Workshop Tour: Behind the Scenes",
-      publishedAt: "2026-11-12",
-      views: 16050,
-      likes: 490,
-      comments: 38,
-      duration: "11:50",
-    },
-  ];
+interface YouTubeVideoItem {
+  id: string;
+  youtubeVideoId: string;
+  title: string;
+  publishedAt: string;
+  duration: string | null;
+  isShort: boolean;
+  viewCount: number | null;
+  likeCount: number | null;
+  commentCount: number | null;
+}
+
+type YouTubeContentType = "videos" | "shorts";
+
+interface YouTubeDashboardProps {
+  selectedRange: string;
+  refreshTrigger?: number;
+}
+
+export function YouTubeDashboard({
+  selectedRange,
+  refreshTrigger = 0,
+}: YouTubeDashboardProps) {
+  const [channels, setChannels] = useState<YouTubeChannelSummary[]>([]);
+  const [selectedChannelId, setSelectedChannelId] = useState<string>("");
+  const [contentType, setContentType] = useState<YouTubeContentType>("videos");
+  const [analytics, setAnalytics] = useState<YouTubeAnalyticsPayload | null>(null);
+  const [videos, setVideos] = useState<YouTubeVideoItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    let ignore = false;
+    async function loadChannels() {
+      setIsLoading(true);
+      setErrorMessage(null);
+      try {
+        const res = await fetch("/api/youtube/channels");
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error?.message || "Failed to load YouTube channels.");
+        }
+        const data = await res.json();
+        if (!ignore) {
+          const list: YouTubeChannelSummary[] = data.channels || [];
+          setChannels(list);
+          if (list.length > 0 && !selectedChannelId) {
+            setSelectedChannelId(list[0].id);
+          } else if (list.length === 0) {
+            setIsLoading(false);
+          }
+        }
+      } catch (err: unknown) {
+        if (!ignore) {
+          setErrorMessage(err instanceof Error ? err.message : "Error loading YouTube data.");
+          setIsLoading(false);
+        }
+      }
+    }
+
+    loadChannels();
+    return () => {
+      ignore = true;
+    };
+  }, [refreshTrigger, selectedChannelId]);
+
+  useEffect(() => {
+    if (!selectedChannelId) return;
+    let ignore = false;
+
+    async function loadDetails() {
+      setIsLoading(true);
+      setErrorMessage(null);
+      try {
+        const [analyticsRes, videosRes] = await Promise.all([
+          fetch(
+            `/api/youtube/channels/${encodeURIComponent(selectedChannelId)}/analytics?range=${encodeURIComponent(
+              selectedRange
+            )}&type=${contentType}`
+          ),
+          fetch(
+            `/api/youtube/channels/${encodeURIComponent(selectedChannelId)}/videos?range=${encodeURIComponent(
+              selectedRange
+            )}&type=${contentType}&limit=25`
+          ),
+        ]);
+
+        if (!analyticsRes.ok || !videosRes.ok) {
+          throw new Error("Failed to load YouTube analytics.");
+        }
+
+        const [analyticsData, videosData] = await Promise.all([
+          analyticsRes.json(),
+          videosRes.json(),
+        ]);
+
+        if (!ignore) {
+          setAnalytics(analyticsData);
+          setVideos(videosData.videos || []);
+          setIsLoading(false);
+        }
+      } catch (err: unknown) {
+        if (!ignore) {
+          setErrorMessage(err instanceof Error ? err.message : "Error loading YouTube analytics.");
+          setIsLoading(false);
+        }
+      }
+    }
+
+    loadDetails();
+    return () => {
+      ignore = true;
+    };
+  }, [selectedChannelId, selectedRange, contentType, refreshTrigger]);
+
+  if (errorMessage) {
+    return (
+      <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
+        <AlertCircleIcon className="w-4 h-4 shrink-0" />
+        <span>{errorMessage}</span>
+      </div>
+    );
+  }
+
+  if (isLoading && !analytics) {
+    return (
+      <div className="py-24 flex flex-col items-center justify-center gap-3 text-[#667085]">
+        <span className="w-6 h-6 border-2 border-[#2563EB] border-t-transparent rounded-full animate-spin" />
+        <span className="text-xs font-medium">Loading YouTube analytics...</span>
+      </div>
+    );
+  }
+
+  if (!isLoading && channels.length === 0) {
+    return (
+      <div className="py-16 text-center rounded-2xl border border-dashed border-[#E5E7EB] bg-white p-8 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+        <div className="inline-flex p-3 rounded-2xl bg-rose-50 text-rose-600 border border-rose-100 mb-3">
+          <YouTubeIcon className="w-7 h-7" />
+        </div>
+        <h2 className="text-base font-bold text-[#111827]">No YouTube Channel Synced Yet</h2>
+        <p className="text-xs text-[#667085] mt-1 max-w-md mx-auto">
+          Add <code className="font-mono text-[#111827]">YOUTUBE_API_KEY</code> to your environment and run the YouTube sync command.
+        </p>
+        <div className="mt-4 inline-block font-mono text-xs bg-[#F7F8FA] border border-[#E5E7EB] px-3 py-2 rounded-lg text-[#111827]">
+          pnpm sync:youtube MogesMotors 2
+        </div>
+      </div>
+    );
+  }
+
+  const dailyData = analytics?.videosPublished.daily || [];
+  const maxViews = Math.max(...dailyData.map((d) => d.views), 1);
 
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-100 dark:border-zinc-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E5E7EB]">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400">
+          <div className="p-2.5 rounded-xl bg-rose-50 text-rose-600 border border-rose-100 shrink-0">
             <YouTubeIcon className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
-              YouTube Analytics
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#111827]">
+              {analytics?.channel.title || "YouTube Channel"}
             </h1>
+            {analytics?.channel.handle && (
+              <p className="text-xs text-[#667085]">@{analytics.channel.handle}</p>
+            )}
           </div>
         </div>
 
-        {period && (
-          <div className="text-xs text-zinc-600 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-900 px-3.5 py-1.5 rounded-full border border-zinc-200/80 dark:border-zinc-800 font-medium tabular-nums">
-            {period.localFromDate} – {period.localToDate}
+        {analytics && (
+          <div className="flex flex-wrap items-center gap-3 self-start sm:self-auto">
+            {/* Videos / Shorts Filter */}
+            <div className="flex items-center p-1 rounded-xl border border-[#E5E7EB] bg-[#F7F8FA]">
+              {(
+                [
+                  { key: "videos", label: "Videos", count: analytics.videosPublished.breakdown?.videos },
+                  { key: "shorts", label: "Shorts", count: analytics.videosPublished.breakdown?.shorts },
+                ] as const
+              ).map((tab) => {
+                const isActive = contentType === tab.key;
+                return (
+                  <button
+                    key={tab.key}
+                    type="button"
+                    onClick={() => setContentType(tab.key)}
+                    className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                      isActive
+                        ? "bg-white text-[#2563EB] shadow-xs ring-1 ring-[#E5E7EB]"
+                        : "text-[#667085] hover:text-[#111827]"
+                    }`}
+                  >
+                    {tab.label}
+                    {tab.count !== undefined ? ` (${tab.count})` : ""}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         )}
       </div>
 
-      {/* Metric Cards Grid */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard
-          title="Subscribers"
-          value="24,850"
-          subtitle="Net gain: +320 subscribers."
-          icon={<UsersIcon className="w-4 h-4" />}
-          badgeText={`Last ${selectedRange.toUpperCase()}`}
-          variant="rose"
-        />
+      {/* KPI Grid */}
+      {analytics && (
+        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <MetricCard
+            title="Subscribers"
+            value={
+              analytics.channel.subscriberCount !== null
+                ? analytics.channel.subscriberCount.toLocaleString()
+                : "Unavailable"
+            }
+            subtitle="Current public channel subscribers."
+            icon={<UsersIcon className="w-4 h-4" />}
+            variant="blue"
+          />
 
-        <MetricCard
-          title="Total Views"
-          value="142,600"
-          subtitle="Lifetime views on public videos."
-          precision="EXACT"
-          icon={<YouTubeIcon className="w-4 h-4" />}
-          variant="rose"
-        />
+          <MetricCard
+            title={contentType === "shorts" ? "Shorts Published" : "Videos Published"}
+            value={analytics.videosPublished.total}
+            subtitle={`Uploaded in selected ${selectedRange.toUpperCase()} period.`}
+            icon={<BarChart3Icon className="w-4 h-4" />}
+            badgeText={`Last ${selectedRange.toUpperCase()}`}
+            variant="blue"
+          />
 
-        <MetricCard
-          title="Watch Time"
-          value="4,210 hrs"
-          subtitle="Estimated total hours watched."
-          icon={<ClockIcon className="w-4 h-4" />}
-          variant="amber"
-        />
+          <MetricCard
+            title="Views"
+            value={
+              analytics.periodTotals.views !== null
+                ? analytics.periodTotals.views.toLocaleString()
+                : "Unavailable"
+            }
+            subtitle={`Views on videos published in ${selectedRange.toUpperCase()}.`}
+            icon={<PlayIcon className="w-4 h-4" />}
+            variant="blue"
+          />
 
-        <MetricCard
-          title="Impressions CTR"
-          value="7.4%"
-          subtitle="Average click-through rate across videos."
-          icon={<BarChart3Icon className="w-4 h-4" />}
-          variant="emerald"
-        />
-      </section>
+          <MetricCard
+            title="Likes"
+            value={
+              analytics.periodTotals.likes !== null
+                ? analytics.periodTotals.likes.toLocaleString()
+                : "Unavailable"
+            }
+            subtitle={`Likes on videos published in ${selectedRange.toUpperCase()}.`}
+            icon={<ThumbsUpIcon className="w-4 h-4" />}
+            variant="blue"
+          />
+        </section>
+      )}
 
-      {/* Charts Section */}
-      <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Daily Views Chart */}
-        <div className="rounded-2xl border border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 shadow-[0_1px_3px_rgba(0,0,0,0.03)] hover:shadow-md transition-all duration-200">
-          <div className="flex items-center justify-between mb-4">
+      {/* Daily Views Chart */}
+      {analytics && (
+        <section className="p-6 rounded-2xl border border-[#E5E7EB] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-6">
             <div>
-              <h3 className="text-base font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">
-                Daily Video Views
+              <h3 className="text-sm font-bold text-[#111827] tracking-tight">
+                Views by Upload Day
               </h3>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 line-clamp-1">
-                Daily public video views.
+              <p className="text-xs text-[#667085] mt-0.5">
+                Total views on videos published each day.
               </p>
             </div>
-            <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300">
-              26.6K views
-            </span>
-          </div>
-
-          <div className="h-44 w-full pt-2">
-            <svg viewBox="0 0 700 160" className="w-full h-full overflow-visible">
-              <defs>
-                <linearGradient id="rose-bar" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#E11D48" stopOpacity="0.9" />
-                  <stop offset="100%" stopColor="#FB7185" stopOpacity="0.75" />
-                </linearGradient>
-              </defs>
-
-              {sampleDailyViews.map((item, idx) => {
-                const totalBars = sampleDailyViews.length;
-                const slotWidth = 700 / totalBars;
-                const barWidth = Math.min(36, slotWidth * 0.55);
-                const barHeight = Math.max(8, (item.views / maxViews) * 110);
-                const x = idx * slotWidth + (slotWidth - barWidth) / 2;
-                const y = 130 - barHeight;
-
-                return (
-                  <g key={item.date} className="group">
-                    <rect
-                      x={x}
-                      y={y}
-                      width={barWidth}
-                      height={barHeight}
-                      rx={4}
-                      fill="url(#rose-bar)"
-                      className="transition-all duration-200 group-hover:opacity-90"
-                    />
-                    <text
-                      x={x + barWidth / 2}
-                      y={y - 6}
-                      textAnchor="middle"
-                      className="text-[11px] font-bold fill-zinc-700 dark:fill-zinc-300 opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      {item.views.toLocaleString()}
-                    </text>
-                    <text
-                      x={x + barWidth / 2}
-                      y={150}
-                      textAnchor="middle"
-                      className="text-[11px] fill-zinc-400 font-medium"
-                    >
-                      {item.date}
-                    </text>
-                  </g>
-                );
-              })}
-            </svg>
-          </div>
-        </div>
-
-        {/* Audience Retention & Growth Chart */}
-        <div className="rounded-2xl border border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 shadow-[0_1px_3px_rgba(0,0,0,0.03)] hover:shadow-md transition-all duration-200">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-base font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">
-                Subscriber Growth
-              </h3>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 line-clamp-1">
-                Net subscribers gained per day.
-              </p>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EFF6FF] text-[#2563EB] border border-[#DBEAFE]">
+              <span className="text-[11px] font-medium">Videos:</span>
+              <span className="text-xs font-bold tabular-nums">
+                {analytics.videosPublished.total}
+              </span>
             </div>
-            <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
-              +320 net
-            </span>
           </div>
 
-          <div className="h-44 w-full pt-2">
-            <svg viewBox="0 0 700 160" className="w-full h-full overflow-visible">
-              <defs>
-                <linearGradient id="emerald-sub-bar" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#059669" stopOpacity="0.9" />
-                  <stop offset="100%" stopColor="#34D399" stopOpacity="0.75" />
-                </linearGradient>
-              </defs>
-
-              {[
-                { date: "11-18", subs: 35 },
-                { date: "11-19", subs: 42 },
-                { date: "11-20", subs: 58 },
-                { date: "11-21", subs: 39 },
-                { date: "11-22", subs: 64 },
-                { date: "11-23", subs: 52 },
-                { date: "11-24", subs: 30 },
-              ].map((item, idx) => {
-                const totalBars = 7;
-                const slotWidth = 700 / totalBars;
-                const barWidth = Math.min(36, slotWidth * 0.55);
-                const barHeight = Math.max(8, (item.subs / 64) * 110);
-                const x = idx * slotWidth + (slotWidth - barWidth) / 2;
-                const y = 130 - barHeight;
-
+          {dailyData.length === 0 ? (
+            <div className="py-12 text-center text-xs text-[#667085] italic">
+              No daily data for this range.
+            </div>
+          ) : (
+            <div className="h-44 flex items-end gap-1.5 sm:gap-2.5 pt-4 overflow-x-auto">
+              {dailyData.map((day) => {
+                const heightPct = day.views > 0 ? Math.max((day.views / maxViews) * 100, 8) : 3;
                 return (
-                  <g key={item.date} className="group">
-                    <rect
-                      x={x}
-                      y={y}
-                      width={barWidth}
-                      height={barHeight}
-                      rx={4}
-                      fill="url(#emerald-sub-bar)"
-                      className="transition-all duration-200 group-hover:opacity-90"
-                    />
-                    <text
-                      x={x + barWidth / 2}
-                      y={y - 6}
-                      textAnchor="middle"
-                      className="text-[11px] font-bold fill-zinc-700 dark:fill-zinc-300 opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      +{item.subs}
-                    </text>
-                    <text
-                      x={x + barWidth / 2}
-                      y={150}
-                      textAnchor="middle"
-                      className="text-[11px] fill-zinc-400 font-medium"
-                    >
-                      {item.date}
-                    </text>
-                  </g>
+                  <div
+                    key={day.date}
+                    className="flex-1 min-w-[20px] flex flex-col items-center gap-2 group"
+                  >
+                    <div className="w-full relative flex items-end justify-center h-32">
+                      <div
+                        style={{ height: `${heightPct}%` }}
+                        className={`w-full max-w-[32px] rounded-t-md transition-all duration-200 ${
+                          day.views > 0
+                            ? "bg-[#2563EB] group-hover:bg-[#3B82F6]"
+                            : "bg-[#E5E7EB]"
+                        }`}
+                        title={`${day.date}: ${day.views.toLocaleString()} views (${day.count} videos)`}
+                      />
+                    </div>
+                    <span className="text-[10px] font-medium text-[#667085] tabular-nums">
+                      {day.date.slice(5)}
+                    </span>
+                  </div>
                 );
               })}
-            </svg>
-          </div>
-        </div>
-      </section>
+            </div>
+          )}
+        </section>
+      )}
 
-      {/* Top Videos Table */}
-      <section className="p-6 rounded-2xl border border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
-        <div className="flex items-center justify-between pb-4 border-b border-zinc-100 dark:border-zinc-800">
-          <div>
-            <h3 className="text-base font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">
-              Published Videos
-            </h3>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 line-clamp-1">
-              Recent channel videos with lifetime metrics.
-            </p>
-          </div>
-          <span className="text-xs text-zinc-500">
-            Total: <strong className="font-semibold text-zinc-800 dark:text-zinc-200">{sampleVideos.length}</strong> videos
-          </span>
+      {/* Videos Table */}
+      <section className="p-6 rounded-2xl border border-[#E5E7EB] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+        <div className="pb-4 border-b border-[#E5E7EB]">
+          <h3 className="text-base font-bold text-[#111827] tracking-tight">
+            Videos in Period
+          </h3>
+          <p className="text-xs text-[#667085] mt-0.5">
+            Videos published in the selected {selectedRange.toUpperCase()} window.
+          </p>
         </div>
 
-        <div className="overflow-x-auto my-2">
-          <table className="w-full text-left text-xs min-w-[560px]">
+        <div className="overflow-x-auto mt-2">
+          <table className="w-full text-left text-[11px] sm:text-xs sm:min-w-[600px]">
             <thead>
-              <tr className="border-b border-zinc-200/80 dark:border-zinc-800 text-zinc-400 font-semibold uppercase tracking-wider text-[11px]">
-                <th className="py-3 px-3 font-semibold">Video Title</th>
-                <th className="py-3 px-3 font-semibold">Published</th>
-                <th className="py-3 px-3 font-semibold">Views</th>
-                <th className="py-3 px-3 font-semibold">Likes</th>
-                <th className="py-3 px-3 font-semibold">Comments</th>
-                <th className="py-3 px-3 font-semibold text-right">Actions</th>
+              <tr className="border-b border-[#E5E7EB] text-[#667085] font-semibold uppercase tracking-wider text-[10px] sm:text-[11px]">
+                <th className="py-3 px-1.5 sm:px-3">
+                  <span className="sm:hidden">Type</span>
+                  <span className="hidden sm:inline">Video</span>
+                </th>
+                <th className="py-3 px-1.5 sm:px-3">Published</th>
+                <th className="py-3 px-3 hidden sm:table-cell">Duration</th>
+                <th className="py-3 px-1.5 sm:px-3">Views</th>
+                <th className="py-3 px-1.5 sm:px-3">Likes</th>
+                <th className="py-3 px-1.5 sm:px-3">Comments</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800/60">
-              {sampleVideos.map((video) => (
-                <tr key={video.id} className="hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40 transition-colors">
-                  <td className="py-3.5 px-3">
-                    <div className="flex items-center gap-2 max-w-md">
-                      <div className="p-1 rounded bg-rose-50 text-rose-600 shrink-0">
-                        <PlayIcon className="w-3.5 h-3.5" />
-                      </div>
-                      <span className="font-semibold text-zinc-900 dark:text-zinc-100 truncate">
-                        {video.title}
-                      </span>
-                      <span className="text-[10px] text-zinc-400 shrink-0">
-                        ({video.duration})
-                      </span>
-                    </div>
-                  </td>
-                  <td className="py-3.5 px-3 text-zinc-600 dark:text-zinc-400 whitespace-nowrap">
-                    {video.publishedAt}
-                  </td>
-                  <td className="py-3.5 px-3 font-bold text-zinc-900 dark:text-zinc-100 tabular-nums">
-                    {video.views.toLocaleString()}
-                  </td>
-                  <td className="py-3.5 px-3 text-zinc-700 dark:text-zinc-300 tabular-nums">
-                    <div className="flex items-center gap-1.5">
-                      <ThumbsUpIcon className="w-3.5 h-3.5 text-zinc-400" />
-                      <span>{video.likes.toLocaleString()}</span>
-                    </div>
-                  </td>
-                  <td className="py-3.5 px-3 text-zinc-700 dark:text-zinc-300 tabular-nums">
-                    <div className="flex items-center gap-1.5">
-                      <MessageSquareIcon className="w-3.5 h-3.5 text-zinc-400" />
-                      <span>{video.comments.toLocaleString()}</span>
-                    </div>
-                  </td>
-                  <td className="py-3.5 px-3 text-right">
-                    <button
-                      type="button"
-                      className="px-2.5 py-1 rounded-lg border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-800 text-[11px] font-semibold text-zinc-700 dark:text-zinc-300 shadow-xs hover:bg-zinc-50 cursor-pointer"
-                    >
-                      Inspect
-                    </button>
+            <tbody className="divide-y divide-[#E5E7EB]/70">
+              {isLoading && videos.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="py-10 text-center text-[#667085]">
+                    Loading videos...
                   </td>
                 </tr>
-              ))}
+              ) : videos.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="py-10 text-center text-[#667085] italic">
+                    No videos published in this period.
+                  </td>
+                </tr>
+              ) : (
+                videos.map((v) => {
+                  const videoUrl = v.isShort
+                    ? `https://www.youtube.com/shorts/${v.youtubeVideoId}`
+                    : `https://www.youtube.com/watch?v=${v.youtubeVideoId}`;
+
+                  return (
+                    <tr key={v.id} className="hover:bg-[#F7F8FA] transition-colors">
+                      <td className="py-3 px-1.5 sm:py-3.5 sm:px-3 font-medium text-[#111827] sm:max-w-xs">
+                        <div className="flex items-center gap-2 sm:max-w-xs">
+                          <a
+                            href={videoUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="sm:hidden inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-semibold bg-[#EFF6FF] text-[#2563EB] border border-[#DBEAFE]"
+                            title={v.title}
+                          >
+                            {v.isShort ? "Short" : "Video"}
+                          </a>
+                          {v.isShort && (
+                            <span className="hidden sm:inline-flex shrink-0 px-1.5 py-0.5 rounded-md text-[10px] font-semibold bg-[#EFF6FF] text-[#2563EB] border border-[#DBEAFE]">
+                              Short
+                            </span>
+                          )}
+                          <a
+                            href={videoUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="hidden sm:inline-flex items-center gap-1.5 text-[#2563EB] hover:underline truncate"
+                            title={v.title}
+                          >
+                            <span className="truncate">{v.title}</span>
+                            <ExternalLinkIcon className="w-3 h-3 shrink-0 opacity-70" />
+                          </a>
+                        </div>
+                      </td>
+                      <td className="py-3 px-1.5 sm:py-3.5 sm:px-3 text-[#667085] whitespace-nowrap">
+                        {new Date(v.publishedAt).toLocaleDateString()}
+                      </td>
+                      <td className="py-3.5 px-3 text-[#667085] font-mono hidden sm:table-cell">
+                        {v.duration || "—"}
+                      </td>
+                      <td className="py-3 px-1.5 sm:py-3.5 sm:px-3 font-bold text-[#111827] tabular-nums whitespace-nowrap">
+                        {v.viewCount !== null ? v.viewCount.toLocaleString() : "—"}
+                      </td>
+                      <td className="py-3 px-1.5 sm:py-3.5 sm:px-3 text-[#111827] tabular-nums whitespace-nowrap">
+                        <span className="inline-flex items-center gap-1">
+                          <ThumbsUpIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#667085]" />
+                          {v.likeCount !== null ? v.likeCount.toLocaleString() : "—"}
+                        </span>
+                      </td>
+                      <td className="py-3 px-1.5 sm:py-3.5 sm:px-3 text-[#111827] tabular-nums whitespace-nowrap">
+                        <span className="inline-flex items-center gap-1">
+                          <MessageSquareIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#667085]" />
+                          {v.commentCount !== null ? v.commentCount.toLocaleString() : "—"}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
-        </div>
-
-        {/* Integration Footer Note (strictly 1 sentence) */}
-        <div className="mt-4 pt-4 border-t border-zinc-100 dark:border-zinc-800 text-center">
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">
-            Ready for YouTube Data API v3 integration with your channel ID and API key.
-          </p>
         </div>
       </section>
     </div>

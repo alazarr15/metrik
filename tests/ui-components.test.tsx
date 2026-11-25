@@ -10,7 +10,7 @@ import {
 import { MetricCard } from "../src/components/ui/metric-card.tsx";
 import { DailyPostsChart } from "../src/components/charts/daily-posts-chart.tsx";
 import { ObservedGrowthChart } from "../src/components/charts/observed-growth-chart.tsx";
-import { Navigation } from "../src/components/ui/navigation.tsx";
+import { Navigation, DateRangeFilter } from "../src/components/ui/navigation.tsx";
 
 describe("Dashboard UI Component Rendering", () => {
   describe("PrecisionBadge", () => {
@@ -226,8 +226,8 @@ describe("Dashboard UI Component Rendering", () => {
     });
   });
 
-  describe("Navigation Range Presets Availability", () => {
-    it("renders available presets enabled and unavailable presets disabled with tooltip", () => {
+  describe("Navigation & DateRangeFilter", () => {
+    it("renders platform switcher icons in Navigation without a hamburger menu", () => {
       const channels = [
         {
           id: "ch-1",
@@ -238,33 +238,47 @@ describe("Dashboard UI Component Rendering", () => {
         },
       ];
 
-      const rangeAvailability = {
-        "1d": { isAvailable: true },
-        "5d": { isAvailable: true },
-        "7d": { isAvailable: true },
-        "15d": { isAvailable: false, reason: "Available after 15 days of recorded history." },
-        "30d": { isAvailable: false, reason: "Available after 30 days of recorded history." },
-        "60d": { isAvailable: false, reason: "Available after 60 days of recorded history." },
-      };
-
       const html = renderToStaticMarkup(
         <Navigation
           channels={channels}
           selectedChannelId="ch-1"
           onSelectChannel={() => {}}
-          selectedRange="7d"
-          onSelectRange={() => {}}
-          rangeAvailability={rangeAvailability}
+          selectedPlatform="telegram"
+          onSelectPlatform={() => {}}
           onLogout={() => {}}
         />
       );
 
-      // 7D is active
-      expect(html).toContain("7D");
-      // 15D, 30D, 60D have title reason tooltips and disabled attribute
+      expect(html).toContain('aria-label="Telegram"');
+      expect(html).toContain('aria-label="YouTube"');
+      expect(html).toContain('aria-label="Facebook"');
+      expect(html).not.toContain('aria-label="Toggle Navigation"');
+    });
+
+    it("renders 1D, 7D, 15D, 30D presets in DateRangeFilter and disables unavailable ones", () => {
+      const rangeAvailability = {
+        "1d": { isAvailable: true },
+        "7d": { isAvailable: true },
+        "15d": { isAvailable: false, reason: "Available after 15 days of recorded history." },
+        "30d": { isAvailable: false, reason: "Available after 30 days of recorded history." },
+      };
+
+      const html = renderToStaticMarkup(
+        <DateRangeFilter
+          selectedRange="7d"
+          onSelectRange={() => {}}
+          rangeAvailability={rangeAvailability}
+        />
+      );
+
+      expect(html).toContain(">1D<");
+      expect(html).toContain(">7D<");
+      expect(html).toContain(">15D<");
+      expect(html).toContain(">30D<");
+      expect(html).not.toContain(">5D<");
+      expect(html).not.toContain(">60D<");
       expect(html).toContain('title="Available after 15 days of recorded history."');
       expect(html).toContain('title="Available after 30 days of recorded history."');
-      expect(html).toContain('title="Available after 60 days of recorded history."');
       expect(html).toContain("disabled");
       expect(html).toContain("cursor-not-allowed");
     });

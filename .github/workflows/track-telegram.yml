@@ -51,3 +51,27 @@ jobs:
           APP_TIMEZONE: ${{ secrets.APP_TIMEZONE || 'Africa/Addis_Ababa' }}
           SYNC_MAX_PAGES: ${{ secrets.SYNC_MAX_PAGES || '2' }}
           NODE_ENV: production
+
+      - name: Sync YouTube channel (if YOUTUBE_API_KEY is configured)
+        if: ${{ secrets.YOUTUBE_API_KEY != '' }}
+        run: pnpm sync:youtube
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+          YOUTUBE_CHANNEL_HANDLE: ${{ secrets.YOUTUBE_CHANNEL_HANDLE || 'MogesMotors' }}
+          YOUTUBE_SYNC_MAX_PAGES: ${{ secrets.YOUTUBE_SYNC_MAX_PAGES || '2' }}
+          APP_TIMEZONE: ${{ secrets.APP_TIMEZONE || 'Africa/Addis_Ababa' }}
+          NODE_ENV: production
+
+      - name: Sync Facebook page (if FACEBOOK_ACCESS_TOKEN is configured)
+        if: ${{ secrets.FACEBOOK_ACCESS_TOKEN != '' && secrets.FACEBOOK_PAGE_ID != '' }}
+        run: pnpm sync:facebook
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
+          FACEBOOK_PAGE_ID: ${{ secrets.FACEBOOK_PAGE_ID }}
+          FACEBOOK_ACCESS_TOKEN: ${{ secrets.FACEBOOK_ACCESS_TOKEN }}
+          FACEBOOK_SYNC_LIMIT: ${{ secrets.FACEBOOK_SYNC_LIMIT || '50' }}
+          APP_TIMEZONE: ${{ secrets.APP_TIMEZONE || 'Africa/Addis_Ababa' }}
+          NODE_ENV: production
