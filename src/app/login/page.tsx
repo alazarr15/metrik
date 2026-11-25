@@ -2,11 +2,12 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { LogoIcon, LockIcon, AlertCircleIcon } from "@/components/ui/icons";
+import { LogoIcon, LockIcon, AlertCircleIcon, EyeIcon, EyeOffIcon } from "@/components/ui/icons";
 
 export default function LoginPage() {
   const router = useRouter();
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -97,16 +98,29 @@ export default function LoginPage() {
               <div className="relative">
                 <input
                   id="admin-password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   autoComplete="current-password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   disabled={isLoading}
-                  className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-[#D1D5DB] bg-white text-sm text-[#111827] placeholder-[#9CA3AF] shadow-xs focus:outline-hidden focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/25 transition-all disabled:opacity-50"
+                  className="w-full pl-9 pr-10 py-2.5 rounded-xl border border-[#D1D5DB] bg-white text-sm text-[#111827] placeholder-[#9CA3AF] shadow-xs focus:outline-hidden focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/25 transition-all disabled:opacity-50"
                 />
                 <LockIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#667085]" />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  title={showPassword ? "Hide password" : "Show password"}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 rounded-lg text-[#667085] hover:text-[#111827] hover:bg-[#F3F4F6] transition-colors cursor-pointer"
+                >
+                  {showPassword ? (
+                    <EyeOffIcon className="w-4 h-4" />
+                  ) : (
+                    <EyeIcon className="w-4 h-4" />
+                  )}
+                </button>
               </div>
             </div>
 
