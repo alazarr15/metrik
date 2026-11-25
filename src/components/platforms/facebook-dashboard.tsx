@@ -244,9 +244,15 @@ export function FacebookDashboard({
             <FacebookIcon className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#111827]">
-              {analytics?.page.name || "Facebook Page"}
-            </h1>
+            <div className="flex flex-wrap items-center gap-2.5">
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#111827]">
+                {analytics?.page.name || "Facebook Page"}
+              </h1>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200 shadow-xs">
+                <FacebookIcon className="w-3.5 h-3.5 shrink-0" />
+                <span>Facebook</span>
+              </span>
+            </div>
           </div>
         </div>
 
