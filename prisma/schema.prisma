@@ -265,3 +265,16 @@ model FacebookSyncRun {
   @@index([pageId, startedAt])
   @@map("facebook_sync_runs")
 }
+
+model ClientVisit {
+  id        String   @id @default(cuid())
+  role      String   @default("client")
+  event     String   @default("view")
+  platform  String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([role, createdAt])
+  @@map("client_visits")
+}

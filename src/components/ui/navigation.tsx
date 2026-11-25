@@ -1,4 +1,5 @@
 import React from "react";
+import Link from "next/link";
 import {
   LogoIcon,
   LogOutIcon,
@@ -7,6 +8,7 @@ import {
   TelegramIcon,
   YouTubeIcon,
   FacebookIcon,
+  ActivityIcon,
 } from "./icons";
 import { SyncStatusType } from "./badge";
 
@@ -90,6 +92,7 @@ interface NavigationProps {
   onSelectChannel: (id: string) => void;
   selectedPlatform?: PlatformType;
   onSelectPlatform?: (platform: PlatformType) => void;
+  userRole?: "admin" | "client" | null;
   onLogout: () => void;
 }
 
@@ -99,6 +102,7 @@ export function Navigation({
   onSelectChannel,
   selectedPlatform = "telegram",
   onSelectPlatform,
+  userRole,
   onLogout,
 }: NavigationProps) {
   const platforms: Array<{
@@ -191,6 +195,18 @@ export function Navigation({
             )}
 
             <div className="h-5 w-px bg-[#E5E7EB] mx-1.5 sm:mx-0.5 hidden sm:block" />
+
+            {userRole === "admin" && (
+              <Link
+                href="/activity"
+                aria-label="Client Visits"
+                title="Client Visits"
+                className="flex items-center gap-1.5 p-2 sm:px-3 sm:py-1.5 rounded-xl border border-[#E5E7EB] bg-white text-xs font-medium text-[#667085] hover:bg-[#EFF6FF] hover:text-[#2563EB] hover:border-[#BFDBFE] shadow-[0_1px_2px_rgba(16,24,40,0.03)] transition-all"
+              >
+                <ActivityIcon className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
+                <span className="hidden sm:inline">Visits</span>
+              </Link>
+            )}
 
             {/* Logout Button (icon-only on mobile, text on desktop) */}
             <button

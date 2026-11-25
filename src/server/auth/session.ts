@@ -3,10 +3,13 @@ import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 export const SESSION_COOKIE_NAME = "metrik_session";
 export const DEFAULT_SESSION_MAX_AGE_SECONDS = 7 * 24 * 60 * 60; // 7 days
 
+export type AuthRole = "admin" | "client";
+
 export interface SessionPayload {
   iat: number; // Issued at (Unix timestamp ms)
   exp: number; // Expiry (Unix timestamp ms)
   sid: string; // Random session nonce
+  role?: AuthRole; // Defaults to "admin" for backwards compatibility
 }
 
 /**
@@ -36,13 +39,15 @@ export function getSessionSigningKey(adminPassword?: string): Buffer {
  */
 export function createSessionToken(
   maxAgeSeconds = DEFAULT_SESSION_MAX_AGE_SECONDS,
-  signingKey?: Buffer
+  signingKey?: Buffer,
+  role: AuthRole = "admin"
 ): string {
   const now = Date.now();
   const payload: SessionPayload = {
     iat: now,
     exp: now + maxAgeSeconds * 1000,
     sid: randomBytes(16).toString("hex"),
+    role,
   };
 
   const key = signingKey || getSessionSigningKey();

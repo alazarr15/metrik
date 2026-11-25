@@ -5,7 +5,9 @@ import {
   SESSION_COOKIE_NAME,
   DEFAULT_SESSION_MAX_AGE_SECONDS,
   validateSameOrigin,
+  AuthRole,
 } from "@/server/auth/session";
+import { recordVisit } from "@/server/activity/visit-logger";
 
 export async function POST(request: Request) {
   // 1. Origin validation against CSRF
@@ -52,20 +54,44 @@ export async function POST(request: Request) {
     );
   }
 
-  // 4. Timing-safe verification
-  const isValid = safeCompareSecret(submittedPassword, serverPassword.trim());
-  if (!isValid) {
+  // 4. Timing-safe verification (admin or optional client password)
+  let role: AuthRole | null = null;
+  if (safeCompareSecret(submittedPassword, serverPassword.trim())) {
+    role = "admin";
+  } else {
+    const clientPassword = process.env.CLIENT_ACCESS_PASSWORD;
+    if (
+      clientPassword &&
+      clientPassword.trim() !== "" &&
+      safeCompareSecret(submittedPassword, clientPassword.trim())
+    ) {
+      role = "client";
+    }
+  }
+
+  if (!role) {
     return NextResponse.json(
-      { error: { code: "UNAUTHORIZED", message: "Invalid administration password." } },
+      { error: { code: "UNAUTHORIZED", message: "Invalid password." } },
       { status: 401 }
     );
   }
 
-  // 5. Create signed session token and attach HTTP-only cookie
-  const sessionToken = createSessionToken(DEFAULT_SESSION_MAX_AGE_SECONDS);
+  // 5. Log login event (non-blocking)
+  await recordVisit({
+    role,
+    event: "login",
+    userAgent: request.headers.get("user-agent"),
+  });
+
+  // 6. Create signed session token and attach HTTP-only cookie
+  const sessionToken = createSessionToken(DEFAULT_SESSION_MAX_AGE_SECONDS, undefined, role);
   const isProd = process.env.NODE_ENV === "production";
 
-  const response = NextResponse.json({ success: true, message: "Authenticated successfully." });
+  const response = NextResponse.json({
+    success: true,
+    role,
+    message: "Authenticated successfully.",
+  });
 
   response.cookies.set({
     name: SESSION_COOKIE_NAME,

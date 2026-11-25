@@ -7,5 +7,8 @@ export async function GET(request: Request) {
     return auth.response!;
   }
 
-  return NextResponse.json({ authenticated: true });
+  return NextResponse.json({
+    authenticated: true,
+    role: auth.role ?? "admin",
+  });
 }

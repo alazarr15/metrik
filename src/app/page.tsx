@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   Navigation,
@@ -157,6 +157,8 @@ export default function DashboardPage() {
   const [selectedChannelId, setSelectedChannelId] = useState<string>("");
   const [selectedRange, setSelectedRange] = useState<RangePreset>("7d");
   const [selectedPlatform, setSelectedPlatform] = useState<PlatformType>("telegram");
+  const [userRole, setUserRole] = useState<"admin" | "client" | null>(null);
+  const lastLoggedPlatformRef = useRef<PlatformType | null>(null);
 
   // Restore last selected platform on mount (URL ?platform= takes precedence over localStorage)
   useEffect(() => {
@@ -192,6 +194,35 @@ export default function DashboardPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshTick, setRefreshTick] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Fetch session role on mount
+  useEffect(() => {
+    let ignore = false;
+    fetch("/api/auth/session")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!ignore && data?.authenticated) {
+          setUserRole(data.role === "client" ? "client" : "admin");
+        }
+      })
+      .catch(() => {});
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  // Log dashboard open and platform switches (ignores 30s background auto-refresh)
+  useEffect(() => {
+    if (!userRole) return;
+    if (lastLoggedPlatformRef.current === selectedPlatform) return;
+    lastLoggedPlatformRef.current = selectedPlatform;
+
+    fetch("/api/activity", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ event: "view", platform: selectedPlatform }),
+    }).catch(() => {});
+  }, [userRole, selectedPlatform]);
 
   // Initial fetch for channels
   useEffect(() => {
@@ -382,6 +413,7 @@ export default function DashboardPage() {
         onSelectChannel={setSelectedChannelId}
         selectedPlatform={selectedPlatform}
         onSelectPlatform={handleSelectPlatform}
+        userRole={userRole}
         onLogout={handleLogout}
       />
 

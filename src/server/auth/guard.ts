@@ -5,10 +5,12 @@ import {
   extractCookie,
   verifySessionToken,
   getSessionSigningKey,
+  AuthRole,
 } from "./session";
 
 export interface AuthCheckResult {
   authorized: boolean;
+  role?: AuthRole;
   response?: NextResponse;
 }
 
@@ -96,9 +98,16 @@ export function validateApiAccess(
   // 2. Extract credential from client headers (CLI, scripts, curl)
   const clientCredential = extractClientCredential(request);
   if (clientCredential) {
-    const isValid = safeCompareSecret(clientCredential, serverPassword.trim());
-    if (isValid) {
-      return { authorized: true };
+    if (safeCompareSecret(clientCredential, serverPassword.trim())) {
+      return { authorized: true, role: "admin" };
+    }
+    const clientPassword = process.env.CLIENT_ACCESS_PASSWORD;
+    if (
+      clientPassword &&
+      clientPassword.trim() !== "" &&
+      safeCompareSecret(clientCredential, clientPassword.trim())
+    ) {
+      return { authorized: true, role: "client" };
     }
     return {
       authorized: false,
@@ -123,7 +132,7 @@ export function validateApiAccess(
       const signingKey = getSessionSigningKey(serverPassword.trim());
       const session = verifySessionToken(sessionToken, signingKey);
       if (session) {
-        return { authorized: true };
+        return { authorized: true, role: session.role ?? "admin" };
       }
     } catch {
       // Session verification failure falls through to 401
