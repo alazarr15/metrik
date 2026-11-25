@@ -239,16 +239,16 @@ export function FacebookDashboard({
     <div className="space-y-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E5E7EB]">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-1 min-w-0">
           <div className="p-2.5 rounded-xl bg-[#EFF6FF] text-[#2563EB] border border-[#DBEAFE] shrink-0">
             <FacebookIcon className="w-5 h-5" />
           </div>
-          <div>
-            <div className="flex flex-wrap items-center gap-2.5">
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#111827]">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between gap-3">
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#111827] truncate">
                 {analytics?.page.name || "Facebook Page"}
               </h1>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200 shadow-xs">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200 shadow-xs shrink-0">
                 <FacebookIcon className="w-3.5 h-3.5 shrink-0" />
                 <span>Facebook</span>
               </span>

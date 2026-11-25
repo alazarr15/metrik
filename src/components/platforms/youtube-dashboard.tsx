@@ -238,22 +238,22 @@ export function YouTubeDashboard({
     <div className="space-y-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E5E7EB]">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-1 min-w-0">
           <div className="p-2.5 rounded-xl bg-rose-50 text-rose-600 border border-rose-100 shrink-0">
             <YouTubeIcon className="w-5 h-5" />
           </div>
-          <div>
-            <div className="flex flex-wrap items-center gap-2.5">
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#111827]">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between gap-3">
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#111827] truncate">
                 {analytics?.channel.title || "YouTube Channel"}
               </h1>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-600 border border-rose-200 shadow-xs">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-600 border border-rose-200 shadow-xs shrink-0">
                 <YouTubeIcon className="w-3.5 h-3.5 shrink-0" />
                 <span>YouTube</span>
               </span>
             </div>
             {analytics?.channel.handle && (
-              <p className="text-xs text-[#667085] mt-0.5">@{analytics.channel.handle}</p>
+              <p className="text-xs text-[#667085] mt-0.5 truncate">@{analytics.channel.handle}</p>
             )}
           </div>
         </div>

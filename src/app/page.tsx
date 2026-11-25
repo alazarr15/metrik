@@ -452,11 +452,11 @@ export default function DashboardPage() {
             {/* Clean Channel Details Header */}
             {currentChannel && (
               <div className="pb-4 border-b border-[#E5E7EB] animate-fade-up">
-                <div className="flex flex-wrap items-center gap-2.5">
-                  <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#111827]">
+                <div className="flex items-center justify-between gap-3">
+                  <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#111827] truncate">
                     {currentChannel.title || currentChannel.telegramUsername}
                   </h1>
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-[#EFF6FF] text-[#2563EB] border border-[#BFDBFE] shadow-xs">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-[#EFF6FF] text-[#2563EB] border border-[#BFDBFE] shadow-xs shrink-0">
                     <TelegramIcon className="w-3.5 h-3.5 shrink-0" />
                     <span>Telegram</span>
                   </span>
