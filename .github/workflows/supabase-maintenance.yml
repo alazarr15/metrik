@@ -1,0 +1,49 @@
+name: Supabase Keep-Alive & Retention
+
+on:
+  schedule:
+    # Run every 3 days at 03:00 UTC to keep Supabase active and prune redundant observations > 65 days
+    - cron: "0 3 */3 * *"
+  workflow_dispatch:
+
+concurrency:
+  group: supabase-maintenance
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  maintenance:
+    name: Keep-Alive & 65-Day Retention
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js (v22)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma Client
+        run: pnpm prisma generate
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
+
+      - name: Ping Supabase & prune redundant observations (> 65 days)
+        run: pnpm retention:prune all 65
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
+          NODE_ENV: production
