@@ -46,37 +46,37 @@ export function MetricCard({
   }[variant];
 
   return (
-    <div className="group relative flex flex-col justify-between p-5 rounded-2xl border border-[#E5E7EB] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)] hover:shadow-[0_4px_12px_rgba(16,24,40,0.06)] hover:border-[#D1D5DB] transition-all duration-200 hover:-translate-y-0.5">
+    <div className="group relative flex flex-col justify-between p-3.5 sm:p-5 rounded-2xl border border-[#E5E7EB] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)] hover:shadow-[0_4px_12px_rgba(16,24,40,0.06)] hover:border-[#D1D5DB] transition-all duration-200 hover:-translate-y-0.5">
       <div>
-        <div className="flex items-center justify-between text-[#667085] mb-3">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-[#667085]">
+        <div className="flex items-center justify-between gap-1.5 text-[#667085] mb-2 sm:mb-3">
+          <span className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-[#667085] truncate">
             {title}
           </span>
           {icon && (
-            <div className={`p-2 rounded-xl transition-transform duration-200 group-hover:scale-105 ${iconStyles}`}>
+            <div className={`p-1.5 sm:p-2 rounded-xl shrink-0 transition-transform duration-200 group-hover:scale-105 ${iconStyles}`}>
               {icon}
             </div>
           )}
         </div>
 
-        <div className="flex items-baseline gap-2 mt-1">
-          <div className="text-3xl font-extrabold tracking-tight tabular-nums text-[#111827]">
+        <div className="flex flex-wrap items-baseline gap-1.5 sm:gap-2 mt-1">
+          <div className="text-2xl sm:text-3xl font-extrabold tracking-tight tabular-nums text-[#111827]">
             {value}
           </div>
           {precision && <PrecisionBadge precision={precision} />}
           {badgeText && (
-            <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold tracking-tight bg-[#EFF6FF] text-[#2563EB] border border-[#DBEAFE]">
+            <span className="px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-semibold tracking-tight bg-[#EFF6FF] text-[#2563EB] border border-[#DBEAFE]">
               {badgeText}
             </span>
           )}
         </div>
 
         {unavailableReason ? (
-          <p className="mt-2 text-xs text-[#667085] line-clamp-2">
+          <p className="mt-1.5 sm:mt-2 text-[11px] sm:text-xs text-[#667085] line-clamp-2">
             {unavailableReason}
           </p>
         ) : subtitle ? (
-          <p className="mt-1.5 text-xs text-[#667085] line-clamp-2 font-medium">
+          <p className="mt-1 sm:mt-1.5 text-[11px] sm:text-xs text-[#667085] line-clamp-2 font-medium">
             {subtitle}
           </p>
         ) : null}

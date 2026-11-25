@@ -458,7 +458,7 @@ export default function DashboardPage() {
 
             {/* Overview Metric Cards Grid: Dynamic Posts Published and Views */}
             {analytics && (
-              <section className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <section className="grid grid-cols-2 gap-3 sm:gap-4">
                 {/* Metric 1: Posts Published (dynamically changes with range) */}
                 <MetricCard
                   title="Posts Published"
