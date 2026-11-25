@@ -190,7 +190,7 @@ export function Navigation({
               </nav>
             )}
 
-            <div className="h-5 w-px bg-[#E5E7EB] mx-0.5 hidden sm:block" />
+            <div className="h-5 w-px bg-[#E5E7EB] mx-1.5 sm:mx-0.5 hidden sm:block" />
 
             {/* Logout Button (icon-only on mobile, text on desktop) */}
             <button
