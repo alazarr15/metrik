@@ -6,6 +6,7 @@ import {
   EyeIcon,
   AlertCircleIcon,
   ClockIcon,
+  TrendingUpIcon,
 } from "../ui/icons";
 import { PrecisionType } from "../ui/badge";
 import { PostObservationModal } from "./post-observation-modal";
@@ -41,6 +42,7 @@ export function PostsTable({ channelId, telegramUsername }: PostsTableProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [includeDeleted, setIncludeDeleted] = useState(false);
+  const [sortOrder, setSortOrder] = useState<"latest" | "top">("latest");
   const [selectedPost, setSelectedPost] = useState<PostItem | null>(null);
 
   // Pagination state
@@ -56,6 +58,7 @@ export function PostsTable({ channelId, telegramUsername }: PostsTableProps) {
       try {
         const params = new URLSearchParams();
         params.set("limit", "15");
+        params.set("sort", sortOrder);
         if (includeDeleted) params.set("includeDeleted", "true");
         if (cursor) params.set("cursor", cursor);
 
@@ -78,7 +81,7 @@ export function PostsTable({ channelId, telegramUsername }: PostsTableProps) {
         setIsLoading(false);
       }
     },
-    [channelId, includeDeleted]
+    [channelId, includeDeleted, sortOrder]
   );
 
   useEffect(() => {
@@ -87,6 +90,7 @@ export function PostsTable({ channelId, telegramUsername }: PostsTableProps) {
       try {
         const params = new URLSearchParams();
         params.set("limit", "15");
+        params.set("sort", sortOrder);
         if (includeDeleted) params.set("includeDeleted", "true");
 
         const res = await fetch(
@@ -121,7 +125,7 @@ export function PostsTable({ channelId, telegramUsername }: PostsTableProps) {
     return () => {
       ignore = true;
     };
-  }, [channelId, includeDeleted]);
+  }, [channelId, includeDeleted, sortOrder]);
 
   function handleNextPage() {
     if (!nextCursor) return;
@@ -152,7 +156,34 @@ export function PostsTable({ channelId, telegramUsername }: PostsTableProps) {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Sort Filter: Latest vs Top Views */}
+          <div className="inline-flex items-center p-1 rounded-xl border border-[#E5E7EB] bg-[#F7F8FA]">
+            {(
+              [
+                { key: "latest", label: "Latest", icon: <ClockIcon className="w-3 h-3 shrink-0" /> },
+                { key: "top", label: "Top Views", icon: <TrendingUpIcon className="w-3 h-3 shrink-0" /> },
+              ] as const
+            ).map((opt) => {
+              const isActive = sortOrder === opt.key;
+              return (
+                <button
+                  key={opt.key}
+                  type="button"
+                  onClick={() => setSortOrder(opt.key)}
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                    isActive
+                      ? "bg-white text-[#2563EB] shadow-xs ring-1 ring-[#E5E7EB]"
+                      : "text-[#667085] hover:text-[#111827]"
+                  }`}
+                >
+                  {opt.icon}
+                  <span>{opt.label}</span>
+                </button>
+              );
+            })}
+          </div>
+
           <label className="flex items-center gap-2 text-xs font-medium text-[#667085] cursor-pointer select-none hover:text-[#111827] transition-colors">
             <input
               type="checkbox"

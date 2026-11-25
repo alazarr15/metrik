@@ -43,6 +43,7 @@ export async function GET(
     const limit = Number.isNaN(limitParam) ? 25 : Math.min(Math.max(limitParam, 1), 100);
     const rangeParam = url.searchParams.get("range");
     const typeParam = (url.searchParams.get("type") || "all").toLowerCase();
+    const sortParam = (url.searchParams.get("sort") || "latest").toLowerCase();
 
     let publishedFilter: { gte: Date; lt: Date } | undefined;
     if (rangeParam) {
@@ -59,7 +60,10 @@ export async function GET(
         ...(publishedFilter ? { publishedAt: publishedFilter } : {}),
         ...(isShortFilter !== undefined ? { isShort: isShortFilter } : {}),
       },
-      orderBy: { publishedAt: "desc" },
+      orderBy:
+        sortParam === "top"
+          ? [{ viewCount: { sort: "desc", nulls: "last" } }, { publishedAt: "desc" }]
+          : [{ publishedAt: "desc" }],
       take: limit,
     });
 

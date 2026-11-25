@@ -45,6 +45,7 @@ export async function GET(
     const cursorParam = url.searchParams.get("cursor");
     const fromParam = url.searchParams.get("from");
     const toParam = url.searchParams.get("to");
+    const sortParam = (url.searchParams.get("sort") || "latest").toLowerCase();
 
     // Base filter conditions
     const baseConditions: Prisma.PostWhereInput[] = [{ channelId: channel.id }];
@@ -84,36 +85,21 @@ export async function GET(
     // Total count of matching records (excluding cursor predicate)
     const totalCount = await prisma.post.count({ where: baseWhere });
 
-    // Build query with keyset cursor if supplied
-    const queryConditions: Prisma.PostWhereInput[] = [...baseConditions];
-    if (cursorParam && cursorParam.trim() !== "") {
-      const decodedCursor = decodePostsCursor(cursorParam.trim());
-      queryConditions.push(buildPostsKeysetWhere(decodedCursor));
-    }
-
-    const posts = await prisma.post.findMany({
-      where: { AND: queryConditions },
-      orderBy: [{ publishedAt: "desc" }, { id: "desc" }],
-      take: limit + 1,
-      include: {
-        observations: {
-          orderBy: { observedAt: "desc" },
-        },
-        _count: {
-          select: { observations: true },
-        },
-      },
-    });
-
-    const hasMore = posts.length > limit;
-    if (hasMore) {
-      posts.pop();
-    }
-
-    const lastPost = posts.length > 0 ? posts[posts.length - 1] : null;
-    const nextCursor = hasMore && lastPost ? encodePostsCursor(lastPost.publishedAt, lastPost.id) : null;
-
-    const formattedPosts = posts.map((post) => {
+    const formatPost = (post: {
+      id: string;
+      telegramMessageId: number;
+      publishedAt: Date;
+      text: string | null;
+      deletedAt: Date | null;
+      observations: Array<{
+        metricType: MetricType;
+        rawValue: string | null;
+        numericValue: number | null;
+        precision: string;
+        observedAt: Date;
+      }>;
+      _count: { observations: number };
+    }) => {
       const viewsObs = post.observations.find((o) => o.metricType === MetricType.VIEWS);
       const reactionsObs = post.observations.find((o) => o.metricType === MetricType.REACTIONS);
       const commentsObs = post.observations.find((o) => o.metricType === MetricType.COMMENTS);
@@ -146,7 +132,74 @@ export async function GET(
         },
         observationsCount: post._count.observations,
       };
+    };
+
+    if (sortParam === "top") {
+      const offset = cursorParam ? Math.max(0, parseInt(cursorParam, 10) || 0) : 0;
+      const allPosts = await prisma.post.findMany({
+        where: baseWhere,
+        orderBy: [{ publishedAt: "desc" }, { id: "desc" }],
+        include: {
+          observations: {
+            orderBy: { observedAt: "desc" },
+          },
+          _count: {
+            select: { observations: true },
+          },
+        },
+      });
+
+      const sorted = allPosts.map(formatPost).sort((a, b) => {
+        const aViews = a.metrics.views.numericValue ?? -1;
+        const bViews = b.metrics.views.numericValue ?? -1;
+        if (bViews !== aViews) return bViews - aViews;
+        return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
+      });
+
+      const pagePosts = sorted.slice(offset, offset + limit);
+      const hasMore = offset + limit < sorted.length;
+      const nextCursor = hasMore ? String(offset + limit) : null;
+
+      return NextResponse.json({
+        posts: pagePosts,
+        pagination: {
+          nextCursor,
+          hasMore,
+          totalCount,
+        },
+      });
+    }
+
+    // Build query with keyset cursor if supplied
+    const queryConditions: Prisma.PostWhereInput[] = [...baseConditions];
+    if (cursorParam && cursorParam.trim() !== "") {
+      const decodedCursor = decodePostsCursor(cursorParam.trim());
+      queryConditions.push(buildPostsKeysetWhere(decodedCursor));
+    }
+
+    const posts = await prisma.post.findMany({
+      where: { AND: queryConditions },
+      orderBy: [{ publishedAt: "desc" }, { id: "desc" }],
+      take: limit + 1,
+      include: {
+        observations: {
+          orderBy: { observedAt: "desc" },
+        },
+        _count: {
+          select: { observations: true },
+        },
+      },
     });
+
+    const hasMore = posts.length > limit;
+    if (hasMore) {
+      posts.pop();
+    }
+
+    const lastPost = posts.length > 0 ? posts[posts.length - 1] : null;
+    const nextCursor = hasMore && lastPost ? encodePostsCursor(lastPost.publishedAt, lastPost.id) : null;
+
+    const formattedPosts = posts.map(formatPost);
 
     return NextResponse.json({
       posts: formattedPosts,

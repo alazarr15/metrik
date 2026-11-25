@@ -12,6 +12,8 @@ import {
   AlertCircleIcon,
   PostIcon,
   ReelIcon,
+  ClockIcon,
+  TrendingUpIcon,
 } from "../ui/icons";
 
 interface FacebookPageSummary {
@@ -81,6 +83,7 @@ export function FacebookDashboard({
   const [pages, setPages] = useState<FacebookPageSummary[]>([]);
   const [selectedPageId, setSelectedPageId] = useState<string>("");
   const [contentType, setContentType] = useState<FacebookContentFilter>("posts");
+  const [sortOrder, setSortOrder] = useState<"latest" | "top">("latest");
   const [analytics, setAnalytics] = useState<FacebookAnalyticsPayload | null>(null);
   const [items, setItems] = useState<FacebookItemEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -125,35 +128,24 @@ export function FacebookDashboard({
     if (!selectedPageId) return;
     let ignore = false;
 
-    async function loadDetails() {
+    async function loadAnalytics() {
       setIsLoading(true);
       setErrorMessage(null);
       try {
-        const [analyticsRes, itemsRes] = await Promise.all([
-          fetch(
-            `/api/facebook/pages/${encodeURIComponent(selectedPageId)}/analytics?range=${encodeURIComponent(
-              selectedRange
-            )}&type=${contentType}`
-          ),
-          fetch(
-            `/api/facebook/pages/${encodeURIComponent(selectedPageId)}/items?range=${encodeURIComponent(
-              selectedRange
-            )}&type=${contentType}&limit=25`
-          ),
-        ]);
+        const analyticsRes = await fetch(
+          `/api/facebook/pages/${encodeURIComponent(selectedPageId)}/analytics?range=${encodeURIComponent(
+            selectedRange
+          )}&type=${contentType}`
+        );
 
-        if (!analyticsRes.ok || !itemsRes.ok) {
+        if (!analyticsRes.ok) {
           throw new Error("Failed to load Facebook analytics.");
         }
 
-        const [analyticsData, itemsData] = await Promise.all([
-          analyticsRes.json(),
-          itemsRes.json(),
-        ]);
+        const analyticsData = await analyticsRes.json();
 
         if (!ignore) {
           setAnalytics(analyticsData);
-          setItems(itemsData.items || []);
           setIsLoading(false);
         }
       } catch (err: unknown) {
@@ -164,11 +156,38 @@ export function FacebookDashboard({
       }
     }
 
-    loadDetails();
+    loadAnalytics();
     return () => {
       ignore = true;
     };
   }, [selectedPageId, selectedRange, contentType, refreshTrigger]);
+
+  useEffect(() => {
+    if (!selectedPageId) return;
+    let ignore = false;
+
+    async function loadItems() {
+      try {
+        const itemsRes = await fetch(
+          `/api/facebook/pages/${encodeURIComponent(selectedPageId)}/items?range=${encodeURIComponent(
+            selectedRange
+          )}&type=${contentType}&sort=${sortOrder}&limit=25`
+        );
+        if (!itemsRes.ok) return;
+        const itemsData = await itemsRes.json();
+        if (!ignore) {
+          setItems(itemsData.items || []);
+        }
+      } catch {
+        // Ignore transient table sort fetch errors
+      }
+    }
+
+    loadItems();
+    return () => {
+      ignore = true;
+    };
+  }, [selectedPageId, selectedRange, contentType, sortOrder, refreshTrigger]);
 
   if (errorMessage) {
     return (
@@ -395,13 +414,41 @@ export function FacebookDashboard({
 
       {/* Items Table */}
       <section className="p-6 rounded-2xl border border-[#E5E7EB] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
-        <div className="pb-4 border-b border-[#E5E7EB]">
-          <h3 className="text-base font-bold text-[#111827] tracking-tight">
-            Posts & Reels in Period
-          </h3>
-          <p className="text-xs text-[#667085] mt-0.5">
-            Items published in the selected {selectedRange.toUpperCase()} window.
-          </p>
+        <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-[#E5E7EB]">
+          <div>
+            <h3 className="text-base font-bold text-[#111827] tracking-tight">
+              Posts & Reels in Period
+            </h3>
+            <p className="text-xs text-[#667085] mt-0.5">
+              Items published in the selected {selectedRange.toUpperCase()} window.
+            </p>
+          </div>
+
+          <div className="inline-flex items-center p-1 rounded-xl border border-[#E5E7EB] bg-[#F7F8FA]">
+            {(
+              [
+                { key: "latest", label: "Latest", icon: <ClockIcon className="w-3 h-3 shrink-0" /> },
+                { key: "top", label: "Top Views", icon: <TrendingUpIcon className="w-3 h-3 shrink-0" /> },
+              ] as const
+            ).map((opt) => {
+              const isActive = sortOrder === opt.key;
+              return (
+                <button
+                  key={opt.key}
+                  type="button"
+                  onClick={() => setSortOrder(opt.key)}
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                    isActive
+                      ? "bg-white text-[#2563EB] shadow-xs ring-1 ring-[#E5E7EB]"
+                      : "text-[#667085] hover:text-[#111827]"
+                  }`}
+                >
+                  {opt.icon}
+                  <span>{opt.label}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         <div className="overflow-x-auto mt-2">

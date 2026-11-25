@@ -11,6 +11,8 @@ import {
   AlertCircleIcon,
   VideoIcon,
   ShortsIcon,
+  ClockIcon,
+  TrendingUpIcon,
 } from "../ui/icons";
 
 interface YouTubeChannelSummary {
@@ -78,6 +80,7 @@ export function YouTubeDashboard({
   const [channels, setChannels] = useState<YouTubeChannelSummary[]>([]);
   const [selectedChannelId, setSelectedChannelId] = useState<string>("");
   const [contentType, setContentType] = useState<YouTubeContentType>("videos");
+  const [sortOrder, setSortOrder] = useState<"latest" | "top">("latest");
   const [analytics, setAnalytics] = useState<YouTubeAnalyticsPayload | null>(null);
   const [videos, setVideos] = useState<YouTubeVideoItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -122,35 +125,24 @@ export function YouTubeDashboard({
     if (!selectedChannelId) return;
     let ignore = false;
 
-    async function loadDetails() {
+    async function loadAnalytics() {
       setIsLoading(true);
       setErrorMessage(null);
       try {
-        const [analyticsRes, videosRes] = await Promise.all([
-          fetch(
-            `/api/youtube/channels/${encodeURIComponent(selectedChannelId)}/analytics?range=${encodeURIComponent(
-              selectedRange
-            )}&type=${contentType}`
-          ),
-          fetch(
-            `/api/youtube/channels/${encodeURIComponent(selectedChannelId)}/videos?range=${encodeURIComponent(
-              selectedRange
-            )}&type=${contentType}&limit=25`
-          ),
-        ]);
+        const analyticsRes = await fetch(
+          `/api/youtube/channels/${encodeURIComponent(selectedChannelId)}/analytics?range=${encodeURIComponent(
+            selectedRange
+          )}&type=${contentType}`
+        );
 
-        if (!analyticsRes.ok || !videosRes.ok) {
+        if (!analyticsRes.ok) {
           throw new Error("Failed to load YouTube analytics.");
         }
 
-        const [analyticsData, videosData] = await Promise.all([
-          analyticsRes.json(),
-          videosRes.json(),
-        ]);
+        const analyticsData = await analyticsRes.json();
 
         if (!ignore) {
           setAnalytics(analyticsData);
-          setVideos(videosData.videos || []);
           setIsLoading(false);
         }
       } catch (err: unknown) {
@@ -161,11 +153,38 @@ export function YouTubeDashboard({
       }
     }
 
-    loadDetails();
+    loadAnalytics();
     return () => {
       ignore = true;
     };
   }, [selectedChannelId, selectedRange, contentType, refreshTrigger]);
+
+  useEffect(() => {
+    if (!selectedChannelId) return;
+    let ignore = false;
+
+    async function loadVideos() {
+      try {
+        const videosRes = await fetch(
+          `/api/youtube/channels/${encodeURIComponent(selectedChannelId)}/videos?range=${encodeURIComponent(
+            selectedRange
+          )}&type=${contentType}&sort=${sortOrder}&limit=25`
+        );
+        if (!videosRes.ok) return;
+        const videosData = await videosRes.json();
+        if (!ignore) {
+          setVideos(videosData.videos || []);
+        }
+      } catch {
+        // Ignore transient table sort fetch errors
+      }
+    }
+
+    loadVideos();
+    return () => {
+      ignore = true;
+    };
+  }, [selectedChannelId, selectedRange, contentType, sortOrder, refreshTrigger]);
 
   if (errorMessage) {
     return (
@@ -396,13 +415,41 @@ export function YouTubeDashboard({
 
       {/* Videos Table */}
       <section className="p-6 rounded-2xl border border-[#E5E7EB] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
-        <div className="pb-4 border-b border-[#E5E7EB]">
-          <h3 className="text-base font-bold text-[#111827] tracking-tight">
-            Videos in Period
-          </h3>
-          <p className="text-xs text-[#667085] mt-0.5">
-            Videos published in the selected {selectedRange.toUpperCase()} window.
-          </p>
+        <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-[#E5E7EB]">
+          <div>
+            <h3 className="text-base font-bold text-[#111827] tracking-tight">
+              Videos in Period
+            </h3>
+            <p className="text-xs text-[#667085] mt-0.5">
+              Videos published in the selected {selectedRange.toUpperCase()} window.
+            </p>
+          </div>
+
+          <div className="inline-flex items-center p-1 rounded-xl border border-[#E5E7EB] bg-[#F7F8FA]">
+            {(
+              [
+                { key: "latest", label: "Latest", icon: <ClockIcon className="w-3 h-3 shrink-0" /> },
+                { key: "top", label: "Top Views", icon: <TrendingUpIcon className="w-3 h-3 shrink-0" /> },
+              ] as const
+            ).map((opt) => {
+              const isActive = sortOrder === opt.key;
+              return (
+                <button
+                  key={opt.key}
+                  type="button"
+                  onClick={() => setSortOrder(opt.key)}
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                    isActive
+                      ? "bg-white text-rose-600 shadow-xs ring-1 ring-[#E5E7EB]"
+                      : "text-[#667085] hover:text-[#111827]"
+                  }`}
+                >
+                  {opt.icon}
+                  <span>{opt.label}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         <div className="overflow-x-auto mt-2">
