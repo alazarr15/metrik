@@ -293,14 +293,16 @@ export function YouTubeDashboard({
                 : "—"
             }
             icon={<UsersIcon className="w-4 h-4" />}
-            variant="blue"
+            variant="rose"
+            animationDelayMs={0}
           />
 
           <MetricCard
             title={contentType === "shorts" ? "Shorts" : "Videos"}
             value={analytics.videosPublished.total}
             icon={<BarChart3Icon className="w-4 h-4" />}
-            variant="blue"
+            variant="amber"
+            animationDelayMs={70}
           />
 
           <MetricCard
@@ -311,7 +313,8 @@ export function YouTubeDashboard({
                 : "—"
             }
             icon={<PlayIcon className="w-4 h-4" />}
-            variant="blue"
+            variant="indigo"
+            animationDelayMs={140}
           />
 
           <MetricCard
@@ -322,7 +325,8 @@ export function YouTubeDashboard({
                 : "—"
             }
             icon={<ThumbsUpIcon className="w-4 h-4" />}
-            variant="blue"
+            variant="emerald"
+            animationDelayMs={210}
           />
         </section>
       )}

@@ -464,13 +464,15 @@ export default function DashboardPage() {
                   value={analytics.postsPublished.total}
                   icon={<BarChart3Icon className="w-4 h-4" />}
                   variant="blue"
+                  animationDelayMs={0}
                 />
 
                 <MetricCard
                   title="Views"
                   value={(analytics.periodViews || analytics.lifetimeViews).totalEstimate.toLocaleString()}
                   icon={<EyeIcon className="w-4 h-4" />}
-                  variant="blue"
+                  variant="violet"
+                  animationDelayMs={70}
                 />
               </section>
             )}

@@ -292,13 +292,15 @@ export function FacebookDashboard({
             }
             icon={<UsersIcon className="w-4 h-4" />}
             variant="blue"
+            animationDelayMs={0}
           />
 
           <MetricCard
             title={contentType === "reels" ? "Reels" : "Posts"}
             value={analytics.itemsPublished.total}
             icon={<BarChart3Icon className="w-4 h-4" />}
-            variant="blue"
+            variant="indigo"
+            animationDelayMs={70}
           />
 
           <MetricCard
@@ -309,7 +311,8 @@ export function FacebookDashboard({
                 : "—"
             }
             icon={<EyeIcon className="w-4 h-4" />}
-            variant="blue"
+            variant="sky"
+            animationDelayMs={140}
           />
 
           <MetricCard
@@ -320,7 +323,8 @@ export function FacebookDashboard({
                 : "—"
             }
             icon={<ThumbsUpIcon className="w-4 h-4" />}
-            variant="blue"
+            variant="emerald"
+            animationDelayMs={210}
           />
         </section>
       )}
