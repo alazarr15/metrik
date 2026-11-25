@@ -456,34 +456,21 @@ export default function DashboardPage() {
               </div>
             )}
 
-            {/* Overview Metric Cards Grid: Dynamic Posts Published and Views */}
+            {/* Overview Metric Cards Grid: Dynamic Posts and Views */}
             {analytics && (
               <section className="grid grid-cols-2 gap-3 sm:gap-4">
-                {/* Metric 1: Posts Published (dynamically changes with range) */}
                 <MetricCard
-                  title="Posts Published"
+                  title="Posts"
                   value={analytics.postsPublished.total}
-                  subtitle={`Published in selected ${selectedRange.toUpperCase()} period.`}
                   icon={<BarChart3Icon className="w-4 h-4" />}
-                  badgeText={`Last ${selectedRange.toUpperCase()}`}
                   variant="blue"
                 />
 
-                {/* Metric 2: Views (dynamically changes with range) */}
                 <MetricCard
                   title="Views"
                   value={(analytics.periodViews || analytics.lifetimeViews).totalEstimate.toLocaleString()}
-                  subtitle={`Views on posts published in this ${selectedRange.toUpperCase()} period.`}
-                  precision={(analytics.periodViews || analytics.lifetimeViews).isExact ? "EXACT" : "ROUNDED"}
                   icon={<EyeIcon className="w-4 h-4" />}
                   variant="blue"
-                  breakdown={[
-                    { label: "Posts in period", count: (analytics.periodViews || analytics.lifetimeViews).breakdown.totalPosts },
-                    { label: "Exact counters", count: (analytics.periodViews || analytics.lifetimeViews).breakdown.exactPostsCount },
-                    { label: "Rounded estimates (1.2K+)", count: (analytics.periodViews || analytics.lifetimeViews).breakdown.roundedPostsCount },
-                    { label: "Unavailable counters", count: (analytics.periodViews || analytics.lifetimeViews).breakdown.unavailablePostsCount },
-                    { label: "Missing observations", count: (analytics.periodViews || analytics.lifetimeViews).breakdown.missingObservationPostsCount },
-                  ]}
                 />
               </section>
             )}

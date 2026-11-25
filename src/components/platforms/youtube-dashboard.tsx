@@ -261,19 +261,16 @@ export function YouTubeDashboard({
             value={
               analytics.channel.subscriberCount !== null
                 ? analytics.channel.subscriberCount.toLocaleString()
-                : "Unavailable"
+                : "—"
             }
-            subtitle="Current public channel subscribers."
             icon={<UsersIcon className="w-4 h-4" />}
             variant="blue"
           />
 
           <MetricCard
-            title={contentType === "shorts" ? "Shorts Published" : "Videos Published"}
+            title={contentType === "shorts" ? "Shorts" : "Videos"}
             value={analytics.videosPublished.total}
-            subtitle={`Uploaded in selected ${selectedRange.toUpperCase()} period.`}
             icon={<BarChart3Icon className="w-4 h-4" />}
-            badgeText={`Last ${selectedRange.toUpperCase()}`}
             variant="blue"
           />
 
@@ -282,9 +279,8 @@ export function YouTubeDashboard({
             value={
               analytics.periodTotals.views !== null
                 ? analytics.periodTotals.views.toLocaleString()
-                : "Unavailable"
+                : "—"
             }
-            subtitle={`Views on videos published in ${selectedRange.toUpperCase()}.`}
             icon={<PlayIcon className="w-4 h-4" />}
             variant="blue"
           />
@@ -294,9 +290,8 @@ export function YouTubeDashboard({
             value={
               analytics.periodTotals.likes !== null
                 ? analytics.periodTotals.likes.toLocaleString()
-                : "Unavailable"
+                : "—"
             }
-            subtitle={`Likes on videos published in ${selectedRange.toUpperCase()}.`}
             icon={<ThumbsUpIcon className="w-4 h-4" />}
             variant="blue"
           />

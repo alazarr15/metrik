@@ -262,33 +262,25 @@ export function FacebookDashboard({
             value={
               analytics.page.followersCount !== null
                 ? analytics.page.followersCount.toLocaleString()
-                : "Unavailable"
+                : "—"
             }
-            subtitle="Current Facebook Page followers."
             icon={<UsersIcon className="w-4 h-4" />}
             variant="blue"
           />
 
           <MetricCard
-            title={contentType === "reels" ? "Reels Published" : "Posts Published"}
+            title={contentType === "reels" ? "Reels" : "Posts"}
             value={analytics.itemsPublished.total}
-            subtitle={`Published in selected ${selectedRange.toUpperCase()} period.`}
             icon={<BarChart3Icon className="w-4 h-4" />}
-            badgeText={`Last ${selectedRange.toUpperCase()}`}
             variant="blue"
           />
 
           <MetricCard
-            title={contentType === "reels" ? "Reel Views" : "Views"}
+            title="Views"
             value={
               analytics.periodTotals.views !== null
                 ? analytics.periodTotals.views.toLocaleString()
-                : "Unavailable"
-            }
-            subtitle={
-              contentType === "reels"
-                ? `Plays on Reels in ${selectedRange.toUpperCase()}.`
-                : `Views on items published in ${selectedRange.toUpperCase()}.`
+                : "—"
             }
             icon={<EyeIcon className="w-4 h-4" />}
             variant="blue"
@@ -299,9 +291,8 @@ export function FacebookDashboard({
             value={
               analytics.periodTotals.reactions !== null
                 ? analytics.periodTotals.reactions.toLocaleString()
-                : "Unavailable"
+                : "—"
             }
-            subtitle={`Reactions in selected ${selectedRange.toUpperCase()} period.`}
             icon={<ThumbsUpIcon className="w-4 h-4" />}
             variant="blue"
           />
