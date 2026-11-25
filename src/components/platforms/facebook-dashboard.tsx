@@ -188,7 +188,7 @@ export function FacebookDashboard({
 
   if (!isLoading && pages.length === 0) {
     return (
-      <div className="py-16 text-center rounded-2xl border border-dashed border-[#E5E7EB] bg-white p-8 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+      <div className="py-16 text-center rounded-2xl border border-dashed border-[#E5E7EB] bg-white p-8 shadow-[0_1px_2px_rgba(16,24,40,0.04)] animate-fade-up">
         <div className="inline-flex p-3 rounded-2xl bg-[#EFF6FF] text-[#2563EB] border border-[#DBEAFE] mb-3">
           <FacebookIcon className="w-7 h-7" />
         </div>

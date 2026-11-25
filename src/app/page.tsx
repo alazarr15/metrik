@@ -10,6 +10,7 @@ import {
   PlatformType,
 } from "@/components/ui/navigation";
 import { MetricCard } from "@/components/ui/metric-card";
+import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
 import { DailyPostsChart, DailyPostData } from "@/components/charts/daily-posts-chart";
 import { PostsTable } from "@/components/posts/posts-table";
 import { EyeIcon, BarChart3Icon, AlertCircleIcon, RefreshCwIcon } from "@/components/ui/icons";
@@ -368,12 +369,7 @@ export default function DashboardPage() {
   const currentChannel = channels.find((c) => c.id === selectedChannelId) || channels[0];
 
   if (isLoading && !analytics && !errorMessage) {
-    return (
-      <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-3 font-sans text-[#111827]">
-        <span className="w-7 h-7 border-2 border-[#2563EB] border-t-transparent rounded-full animate-spin" />
-        <p className="text-xs font-medium text-[#667085]">Loading dashboard...</p>
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   return (
@@ -449,7 +445,7 @@ export default function DashboardPage() {
 
             {/* Clean Channel Details Header */}
             {currentChannel && (
-              <div className="pb-4 border-b border-[#E5E7EB]">
+              <div className="pb-4 border-b border-[#E5E7EB] animate-fade-up">
                 <h1 className="text-2xl font-bold tracking-tight text-[#111827]">
                   {currentChannel.title || currentChannel.telegramUsername}
                 </h1>

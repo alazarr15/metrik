@@ -130,7 +130,8 @@ export function DailyPostsChart({ data, total }: DailyPostsChartProps) {
                     height={Math.max(barHeight, 2)}
                     rx={3}
                     fill={isHovered ? "url(#cobalt-bar-hover)" : "url(#cobalt-bar)"}
-                    className="transition-all duration-150"
+                    className="transition-all duration-150 animate-grow-bar"
+                    style={{ transformOrigin: `${x + barWidth / 2}px ${paddingTop + chartHeight}px` }}
                   />
                 ) : (
                   /* Zero count baseline indicator */
@@ -164,7 +165,7 @@ export function DailyPostsChart({ data, total }: DailyPostsChartProps) {
         {/* Hover Tooltip Overlay */}
         {hoveredIndex !== null && data[hoveredIndex] && (
           <div
-            className="absolute top-2 left-1/2 -translate-x-1/2 px-2.5 py-1.5 rounded-lg bg-[#111827] text-white text-xs shadow-md pointer-events-none transition-all z-10"
+            className="absolute top-2 left-1/2 -translate-x-1/2 px-2.5 py-1.5 rounded-lg bg-[#111827] text-white text-xs shadow-lg pointer-events-none transition-all z-10 animate-pop"
           >
             <div className="font-semibold">{data[hoveredIndex].date}</div>
             <div className="text-[11px] opacity-90">

@@ -66,10 +66,10 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-white dark:bg-zinc-950 p-4">
       <div className="w-full max-w-md">
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 rounded-3xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.06)]">
+        <div className="relative bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 rounded-3xl p-8 shadow-[0_12px_40px_-12px_rgba(37,99,235,0.18)] animate-fade-up">
           {/* Header */}
           <div className="text-center mb-7">
-            <div className="inline-flex p-3 rounded-2xl bg-gradient-to-tr from-indigo-600 to-indigo-500 text-white shadow-md mb-3.5">
+            <div className="inline-flex p-3 rounded-2xl bg-gradient-to-tr from-[#1D4ED8] to-[#3B82F6] text-white shadow-[0_6px_18px_rgba(37,99,235,0.35)] mb-3.5">
               <LogoIcon className="w-7 h-7" />
             </div>
             <h1 className="text-2xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100">

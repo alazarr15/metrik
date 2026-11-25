@@ -134,7 +134,7 @@ export function Navigation({
           {/* Left: Brand & Channel Dropdown */}
           <div className="flex items-center gap-3 sm:gap-4 min-w-0">
             <div className="flex items-center gap-2 shrink-0">
-              <div className="p-1.5 rounded-xl bg-[#2563EB] text-white shadow-xs">
+              <div className="p-1.5 rounded-xl bg-gradient-to-tr from-[#1D4ED8] to-[#3B82F6] text-white shadow-[0_2px_8px_rgba(37,99,235,0.35)]">
                 <LogoIcon className="w-5 h-5" />
               </div>
               <span className="font-extrabold text-base sm:text-lg tracking-tight text-[#111827] hidden xs:inline sm:inline">
@@ -176,10 +176,10 @@ export function Navigation({
                       onClick={() => onSelectPlatform(p.key)}
                       aria-label={p.label}
                       title={p.label}
-                      className={`flex items-center justify-center gap-1.5 p-2 sm:px-3 sm:py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
+                      className={`flex items-center justify-center gap-1.5 p-2 sm:px-3 sm:py-1.5 rounded-xl text-xs font-semibold border transition-all duration-200 cursor-pointer ${
                         isActive
-                          ? p.activeClass
-                          : "bg-white text-[#667085] border-[#E5E7EB] hover:bg-[#F7F8FA] hover:text-[#111827] hover:border-[#D1D5DB]"
+                          ? `${p.activeClass} shadow-[0_2px_8px_rgba(37,99,235,0.25)] -translate-y-px`
+                          : "bg-white text-[#667085] border-[#E5E7EB] hover:bg-[#F7F8FA] hover:text-[#111827] hover:border-[#D1D5DB] hover:-translate-y-px"
                       }`}
                     >
                       {p.icon}
