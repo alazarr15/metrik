@@ -53,8 +53,12 @@ jobs:
           NODE_ENV: production
 
       - name: Sync YouTube channel (if YOUTUBE_API_KEY is configured)
-        if: ${{ secrets.YOUTUBE_API_KEY != '' }}
-        run: pnpm sync:youtube
+        run: |
+          if [ -n "$YOUTUBE_API_KEY" ]; then
+            pnpm sync:youtube
+          else
+            echo "YOUTUBE_API_KEY not set; skipping YouTube sync."
+          fi
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           DIRECT_URL: ${{ secrets.DIRECT_URL }}
@@ -65,8 +69,12 @@ jobs:
           NODE_ENV: production
 
       - name: Sync Facebook page (if FACEBOOK_ACCESS_TOKEN is configured)
-        if: ${{ secrets.FACEBOOK_ACCESS_TOKEN != '' && secrets.FACEBOOK_PAGE_ID != '' }}
-        run: pnpm sync:facebook
+        run: |
+          if [ -n "$FACEBOOK_ACCESS_TOKEN" ] && [ -n "$FACEBOOK_PAGE_ID" ]; then
+            pnpm sync:facebook
+          else
+            echo "Facebook credentials not set; skipping Facebook sync."
+          fi
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           DIRECT_URL: ${{ secrets.DIRECT_URL }}
