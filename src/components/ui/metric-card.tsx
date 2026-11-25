@@ -50,12 +50,12 @@ export function MetricCard({
   if (isMinimal) {
     return (
       <div className="group relative flex items-center justify-between gap-3 p-3.5 sm:p-5 rounded-2xl border border-[#E5E7EB] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)] hover:shadow-[0_8px_20px_rgba(37,99,235,0.08)] hover:border-[#BFDBFE] transition-all duration-300 hover:-translate-y-1">
-        <div className="flex items-baseline gap-2 min-w-0">
-          <span className="text-2xl sm:text-3xl font-extrabold tracking-tight tabular-nums text-[#111827] transition-transform duration-300 group-hover:scale-105 origin-left">
-            {value}
-          </span>
-          <span className="text-xs sm:text-sm font-semibold text-[#667085] truncate">
+        <div className="flex flex-col min-w-0">
+          <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-[#667085] truncate">
             {title}
+          </span>
+          <span className="mt-1 text-2xl sm:text-3xl font-extrabold tracking-tight tabular-nums text-[#111827] transition-transform duration-300 group-hover:scale-105 origin-left">
+            {value}
           </span>
         </div>
         {icon && (
