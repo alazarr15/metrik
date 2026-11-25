@@ -267,17 +267,6 @@ export default function DashboardPage() {
           setAnalytics(analyticsData);
           setIsLoading(false);
           setIsRefreshing(false);
-
-          // Graceful fallback: If current selectedRange is unavailable, select the longest available valid range
-          if (overviewData.coverage?.rangeAvailability) {
-            const currentAvail = overviewData.coverage.rangeAvailability[selectedRange]?.isAvailable;
-            if (!currentAvail && overviewData.coverage.longestAvailablePreset) {
-              const fallback = overviewData.coverage.longestAvailablePreset;
-              if (fallback !== selectedRange) {
-                setSelectedRange(fallback);
-              }
-            }
-          }
         }
       } catch (err: unknown) {
         if (!ignore) {
@@ -295,6 +284,19 @@ export default function DashboardPage() {
       ignore = true;
     };
   }, [selectedChannelId, selectedRange, router]);
+
+  // Apply Telegram-only range fallback only when viewing Telegram,
+  // so YouTube/Facebook 15D & 30D selections are never overwritten.
+  useEffect(() => {
+    if (selectedPlatform !== "telegram") return;
+    const coverage = channelOverview?.coverage;
+    if (!coverage?.rangeAvailability || !coverage.longestAvailablePreset) return;
+
+    const currentAvail = coverage.rangeAvailability[selectedRange]?.isAvailable;
+    if (!currentAvail && coverage.longestAvailablePreset !== selectedRange) {
+      queueMicrotask(() => setSelectedRange(coverage.longestAvailablePreset!));
+    }
+  }, [selectedPlatform, channelOverview, selectedRange]);
 
   // Periodic background auto-refresh every 30 seconds
   useEffect(() => {
