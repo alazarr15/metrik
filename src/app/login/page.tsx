@@ -56,9 +56,10 @@ export default function LoginPage() {
         return;
       }
 
-      // Login succeeded, cookie is set automatically by server
-      router.refresh();
-      router.replace("/");
+      // Login succeeded, cookie is set automatically by server.
+      // Force a full page navigation so the fresh HttpOnly cookie is applied and no
+      // stale /login React state (like isLoading=true) can persist across navigations.
+      window.location.replace("/");
     } catch {
       setErrorMessage("Network error occurred. Please verify your connection.");
       setIsLoading(false);
