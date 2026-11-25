@@ -10,6 +10,8 @@ import {
   Share2Icon,
   ExternalLinkIcon,
   AlertCircleIcon,
+  PostIcon,
+  ReelIcon,
 } from "../ui/icons";
 
 interface FacebookPageSummary {
@@ -251,11 +253,11 @@ export function FacebookDashboard({
         {analytics && (
           <div className="flex flex-wrap items-center gap-3 self-start sm:self-auto">
             {/* Posts / Reels Filter */}
-            <div className="flex items-center p-1 rounded-xl border border-[#E5E7EB] bg-[#F7F8FA]">
+            <div className="inline-flex items-center gap-1 p-1 rounded-2xl border border-[#E5E7EB] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.03)]">
               {(
                 [
-                  { key: "posts", label: "Posts", count: analytics.itemsPublished.breakdown?.posts },
-                  { key: "reels", label: "Reels", count: analytics.itemsPublished.breakdown?.reels },
+                  { key: "posts", label: "Posts", icon: <PostIcon className="w-3.5 h-3.5 shrink-0" /> },
+                  { key: "reels", label: "Reels", icon: <ReelIcon className="w-3.5 h-3.5 shrink-0" /> },
                 ] as const
               ).map((tab) => {
                 const isActive = contentType === tab.key;
@@ -264,14 +266,14 @@ export function FacebookDashboard({
                     key={tab.key}
                     type="button"
                     onClick={() => setContentType(tab.key)}
-                    className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                    className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all duration-200 active:scale-[0.97] cursor-pointer ${
                       isActive
-                        ? "bg-white text-[#2563EB] shadow-xs ring-1 ring-[#E5E7EB]"
-                        : "text-[#667085] hover:text-[#111827]"
+                        ? "bg-[#EFF6FF] text-[#2563EB] ring-1 ring-[#BFDBFE] shadow-xs"
+                        : "text-[#667085] hover:text-[#111827] hover:bg-[#F7F8FA]"
                     }`}
                   >
-                    {tab.label}
-                    {tab.count !== undefined ? ` (${tab.count})` : ""}
+                    {tab.icon}
+                    <span>{tab.label}</span>
                   </button>
                 );
               })}

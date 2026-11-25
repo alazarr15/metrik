@@ -531,3 +531,88 @@ export function Share2Icon({ className = "w-4 h-4", size, ...props }: IconProps)
     </svg>
   );
 }
+
+export function VideoIcon({ className = "w-4 h-4", size, ...props }: IconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      {...props}
+    >
+      <rect width="20" height="14" x="2" y="5" rx="3" />
+      <polygon points="10 9 16 12 10 15 10 9" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+export function ShortsIcon({ className = "w-4 h-4", size, ...props }: IconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      {...props}
+    >
+      <rect width="12" height="18" x="6" y="3" rx="3" />
+      <polygon points="10.5 9.5 15 12 10.5 14.5 10.5 9.5" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+export function PostIcon({ className = "w-4 h-4", size, ...props }: IconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      {...props}
+    >
+      <rect width="18" height="18" x="3" y="3" rx="3" />
+      <path d="M7 8h10" />
+      <path d="M7 12h10" />
+      <path d="M7 16h6" />
+    </svg>
+  );
+}
+
+export function ReelIcon({ className = "w-4 h-4", size, ...props }: IconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      {...props}
+    >
+      <rect width="18" height="18" x="3" y="3" rx="3" />
+      <path d="M3 8h18" />
+      <path d="M8 3l2 5" />
+      <path d="M14 3l2 5" />
+      <polygon points="10.5 11.5 15 14 10.5 16.5 10.5 11.5" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
